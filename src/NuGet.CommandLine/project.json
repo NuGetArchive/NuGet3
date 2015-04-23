@@ -22,5 +22,10 @@
       "dependencies": {
       }
     }
+  },
+
+  "runtimes": {
+    "win8-x86": { },
+    "win8-x64": { }
   }
 }

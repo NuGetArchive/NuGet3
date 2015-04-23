@@ -13,6 +13,8 @@ using System;
 using NuGet.LibraryModel;
 using NuGet.Versioning;
 using System.IO;
+using NuGet.Frameworks;
+using NuGet.RuntimeModel;
 
 namespace NuGet.Strawman.Commands
 {
@@ -29,12 +31,10 @@ namespace NuGet.Strawman.Commands
 
         public async Task<RestoreResult> ExecuteAsync(RestoreRequest request)
         {
-            if(request.Project.TargetFrameworks.Count == 0)
+            if (request.Project.TargetFrameworks.Count == 0)
             {
                 _log.LogError("The project does not specify any target frameworks!");
             }
-
-            bool success = true;
 
             _log.LogInformation($"Restoring packages for '{request.Project.FilePath}'");
 
@@ -59,31 +59,37 @@ namespace NuGet.Strawman.Commands
             {
                 context.RemoteLibraryProviders.Add(provider);
             }
+            // Beware the walkers!
+            var remoteWalker = new RemoteDependencyWalker(context);
+
+            var projectRange = new LibraryRange()
+            {
+                Name = request.Project.Name,
+                VersionRange = new VersionRange(request.Project.Version),
+                TypeConstraint = LibraryTypes.Project
+            };
 
             // Resolve dependency graphs
-            var remoteWalker = new RemoteDependencyWalker(context);
-            var graphs = new List<GraphNode<RemoteResolveResult>>();
-            foreach (var framework in request.Project.TargetFrameworks)
+            var frameworks = request.Project.TargetFrameworks.Select(f => f.FrameworkName).ToList();
+            List<GraphNode<RemoteResolveResult>> graphs = await WalkDependencies(
+                projectRange,
+                frameworks,
+                remoteWalker);
+
+            if(!ResolveConflicts(graphs))
             {
-                _log.LogInformation($"Restoring packages for {framework.FrameworkName}");
-                var graph = await remoteWalker.Walk(
-                    new LibraryRange()
-                    {
-                        Name = request.Project.Name,
-                        VersionRange = new VersionRange(request.Project.Version),
-                        TypeConstraint = LibraryTypes.Project
-                    },
-                    framework.FrameworkName);
-                graphs.Add(graph);
+                _log.LogError("Failed to resolve conflicts");
+                return new RestoreResult(success: false);
             }
 
-            _log.LogVerbose("Resolving Conflicts...");
-            foreach(var graph in graphs)
+            // Resolve runtime dependencies
+            if (request.Project.RuntimeGraph.Runtimes.Count > 0)
             {
-                if (!graph.TryResolveConflicts())
-                {
-                    _log.LogError("Unable to resolve conflicts!");
-                }
+                await WalkRuntimeDependencies(projectRange, graphs, frameworks, request.Project.RuntimeGraph, remoteWalker);
+            }
+            else
+            {
+                _log.LogVerbose("Skipping runtime dependency walk, no runtimes defined in project.json");
             }
 
             var libraries = new HashSet<LibraryIdentity>();
@@ -91,6 +97,57 @@ namespace NuGet.Strawman.Commands
             var missingItems = new HashSet<LibraryRange>();
             var graphItems = new List<GraphItem<RemoteResolveResult>>();
 
+            bool success = FlattenDependencyGraph(context, graphs, libraries, installItems, missingItems, graphItems);
+
+            await InstallPackages(installItems, request.PackagesDirectory, request.DryRun);
+
+            return new RestoreResult(success);
+        }
+
+        private async Task WalkRuntimeDependencies(LibraryRange projectRange, IEnumerable<GraphNode<RemoteResolveResult>> graphs, IEnumerable<NuGetFramework> frameworks, RuntimeGraph projectRuntimes, RemoteDependencyWalker walker)
+        {
+            foreach (var pair in graphs.Zip(frameworks, Tuple.Create))
+            {
+                var graph = pair.Item1;
+                var framework = pair.Item2;
+
+                // Load runtime specs
+                _log.LogVerbose("Scanning packages for runtime.json files...");
+                var runtimeFileTasks = new List<Task<RuntimeGraph>>();
+                graph.ForEach(node =>
+                {
+                    var match = node?.Item?.Data?.Match;
+                    if (match == null) { return; }
+                    runtimeFileTasks.Add(match.Provider.GetRuntimeGraph(node.Item.Data.Match, framework));
+                });
+
+                var libraryRuntimeFiles = await Task.WhenAll(runtimeFileTasks);
+
+                // Build the complete runtime graph
+                var runtimeGraph = new RuntimeGraph();
+                runtimeGraph.MergeIn(projectRuntimes);
+                foreach(var runtime in libraryRuntimeFiles.Where(file => file != null))
+                {
+                    runtimeGraph.MergeIn(runtime);
+                }
+
+                var runtimeGraphs = new List<GraphNode<RemoteResolveResult>>();
+                foreach (var runtimeName in projectRuntimes.Runtimes.Keys)
+                {
+                    // Walk dependencies for the runtime
+                    _log.LogInformation($"Restoring packages for {framework} on {runtimeName}");
+                    runtimeGraphs.Add(await walker.Walk(
+                        projectRange,
+                        framework,
+                        runtimeName,
+                        runtimeGraph));
+                }
+            }
+        }
+
+        private bool FlattenDependencyGraph(RemoteWalkContext context, List<GraphNode<RemoteResolveResult>> graphs, HashSet<LibraryIdentity> libraries, List<GraphItem<RemoteResolveResult>> installItems, HashSet<LibraryRange> missingItems, List<GraphItem<RemoteResolveResult>> graphItems)
+        {
+            bool success = true;
             foreach (var g in graphs)
             {
                 g.ForEach(node =>
@@ -139,10 +196,37 @@ namespace NuGet.Strawman.Commands
                     libraries.Add(node.Item.Key);
                 });
             }
+            return success;
+        }
 
-            await InstallPackages(installItems, request.PackagesDirectory, request.DryRun);
+        private bool ResolveConflicts(List<GraphNode<RemoteResolveResult>> graphs)
+        {
+            _log.LogVerbose("Resolving Conflicts...");
+            foreach (var graph in graphs)
+            {
+                if (!graph.TryResolveConflicts())
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
 
-            return new RestoreResult(success);
+        private async Task<List<GraphNode<RemoteResolveResult>>> WalkDependencies(LibraryRange projectRange, IEnumerable<NuGetFramework> frameworks, RemoteDependencyWalker walker)
+        {
+            var graphs = new List<GraphNode<RemoteResolveResult>>();
+            foreach (var framework in frameworks)
+            {
+                _log.LogInformation($"Restoring packages for {framework}");
+                var graph = await walker.Walk(
+                    projectRange,
+                    framework,
+                    runtimeName: null,
+                    runtimeGraph: null);
+                graphs.Add(graph);
+            }
+
+            return graphs;
         }
 
         private async Task InstallPackages(List<GraphItem<RemoteResolveResult>> installItems, string packagesDirectory, bool dryRun)

@@ -174,6 +174,56 @@
         "lib/portable-net45+win8/Microsoft.CodeAnalysis.CSharp.xml"
       ]
     },
+    "Microsoft.CSharp/4.0.0-beta-22822": {
+      "serviceable": false,
+      "sha": "CyoouuItjI2LVQ6csD/C+pyzMGTyzM6zmVX1CYh6aIHzNtSpv/NQdOKpdnZI5sUydFow4jiSq9Loox3B+YvA0w==",
+      "frameworks": {
+        "DNX,Version=v4.5.1": {
+          "dependencies": {
+            "System.Dynamic.Runtime": "4.0.0-beta-22822",
+            "System.Linq.Expressions": "4.0.0-beta-22822",
+            "System.Runtime": "4.0.0-beta-22822"
+          },
+          "frameworkAssemblies": [],
+          "runtimeAssemblies": [],
+          "compileAssemblies": []
+        },
+        "DNXCore,Version=v5.0": {
+          "dependencies": {
+            "System.Dynamic.Runtime": "4.0.0-beta-22822",
+            "System.Linq.Expressions": "4.0.0-beta-22822",
+            "System.Runtime": "4.0.0-beta-22822"
+          },
+          "frameworkAssemblies": [],
+          "runtimeAssemblies": [
+            "lib/aspnetcore50/Microsoft.CSharp.dll"
+          ],
+          "compileAssemblies": [
+            "lib/contract/Microsoft.CSharp.dll"
+          ]
+        },
+        ".NETFramework,Version=v4.5": {
+          "dependencies": {
+            "System.Dynamic.Runtime": "4.0.0-beta-22822",
+            "System.Linq.Expressions": "4.0.0-beta-22822",
+            "System.Runtime": "4.0.0-beta-22822"
+          },
+          "frameworkAssemblies": [],
+          "runtimeAssemblies": [],
+          "compileAssemblies": []
+        }
+      },
+      "files": [
+        "License.rtf",
+        "Microsoft.CSharp.4.0.0-beta-22822.nupkg",
+        "Microsoft.CSharp.4.0.0-beta-22822.nupkg.sha512",
+        "Microsoft.CSharp.nuspec",
+        "lib/aspnetcore50/Microsoft.CSharp.dll",
+        "lib/contract/Microsoft.CSharp.dll",
+        "lib/net45/_._",
+        "lib/portable-wpa81+wp80+win80+net45+aspnetcore50/Microsoft.CSharp.dll"
+      ]
+    },
     "Microsoft.Framework.CommandLineUtils/1.0.0-beta5-11595": {
       "serviceable": false,
       "sha": "GeZ8jmsnIDxJK793MugwtGVyxpcxzMCbGbJO//lfh2foXsz7lg32vLSYTlC2MSzLRzzgb+pTkLuFTl/6FpuZ8w==",
