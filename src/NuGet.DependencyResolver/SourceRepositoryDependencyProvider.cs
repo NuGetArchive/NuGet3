@@ -23,18 +23,21 @@ namespace NuGet.DependencyResolver
 
         public SourceRepositoryDependencyProvider(
             SourceRepository sourceRepository,
-            ILogger logger)
-            : this(sourceRepository, logger, noCache: false)
+            ILoggerFactory loggerFactory)
+            : this(sourceRepository, loggerFactory, noCache: false)
         {
         }
 
         public SourceRepositoryDependencyProvider(
             SourceRepository sourceRepository,
-            ILogger logger,
+            ILoggerFactory loggerFactory,
             bool noCache)
         {
+            var logger = loggerFactory.CreateLogger(
+                    typeof(SourceRepository).FullName + ":" + sourceRepository.PackageSource.Source);
+            _logger = loggerFactory.CreateLogger<SourceRepositoryDependencyProvider>();
+
             _sourceRepository = sourceRepository;
-            _logger = logger;
             _noCache = noCache;
         }
 

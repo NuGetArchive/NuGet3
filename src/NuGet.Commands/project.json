@@ -1,6 +1,6 @@
-﻿{
-  "version": "3.0.0-*",
-  "description": "Complete commands common to command-line and GUI NuGet clients",
+{
+    "version": "3.0.0-*",
+    "description": "Complete commands common to command-line and GUI NuGet clients",
 
   "dependencies": {
     "NuGet.Client": "3.0.0-*",

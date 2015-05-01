@@ -22,8 +22,7 @@ namespace NuGet.Commands
         internal static async Task InstallFromStream(
             Stream stream,
             LibraryIdentity library,
-            string packagesDirectory,
-            ILogger log)
+            string packagesDirectory)
         {
             var packagePathResolver = new DefaultPackagePathResolver(packagesDirectory);
 

@@ -5,6 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using NuGet.Configuration;
 using NuGet.ProjectModel;
+using NuGet.DependencyResolver;
+using Microsoft.Framework.Logging;
+using NuGet.Protocol.Core.Types;
+using NuGet.Protocol.Core.v3;
+using System.IO;
 
 namespace NuGet.Commands
 {
@@ -12,13 +17,27 @@ namespace NuGet.Commands
     {
         public static readonly int DefaultDegreeOfConcurrency = 8;
 
-        public RestoreRequest(PackageSpec project, IEnumerable<PackageSource> sources, string packagesDirectory)
+        private readonly RemoteWalkContext _context;
+
+        public RestoreRequest(PackageSpec project, string packagesDirectory, IEnumerable<PackageSource> sources, IEnumerable<ExternalProjectReference> externalProjects)
         {
             Project = project;
-            Sources = sources.ToList().AsReadOnly();
+            Sources = sources.ToList();
+            ExternalProjects = externalProjects.ToList();
+            PackagesDirectory = new PackagesDirectory(packagesDirectory);
+
+            LockFilePath = Path.Combine(project.BaseDirectory, LockFileFormat.LockFileName);
+        }
+
+        public RestoreRequest(PackageSpec project, PackagesDirectory packagesDirectory, RemoteWalkContext context)
+        {
+            Project = project;
             PackagesDirectory = packagesDirectory;
+
             ExternalProjects = new List<ExternalProjectReference>();
             WriteMSBuildFiles = true;
+
+            _context = context;
         }
 
         /// <summary>
@@ -30,11 +49,6 @@ namespace NuGet.Commands
         /// The complete list of sources to retrieve packages from (excluding caches)
         /// </summary>
         public IReadOnlyList<PackageSource> Sources { get; }
-
-        /// <summary>
-        /// The directory in which to install packages
-        /// </summary>
-        public string PackagesDirectory { get; }
 
         /// <summary>
         /// A list of projects provided by external build systems (i.e. MSBuild)
@@ -63,5 +77,59 @@ namespace NuGet.Commands
         /// If set, MSBuild files (.targets/.props) will be written for the project being restored
         /// </summary>
         public bool WriteMSBuildFiles { get; set; }
+
+        /// The remote walk context used to perform the restore. This should generally not be set, unless you are writing
+        /// tests. It is handled by the constructor.
+        /// </summary>
+        public RemoteWalkContext WalkContext { get; }
+
+        /// <summary>
+        /// The destination to which packages should be installed
+        /// </summary>
+        public PackagesDirectory PackagesDirectory { get; set; }
+
+        public ILoggerFactory LoggerFactory { get; private set; }
+
+        public virtual RemoteWalkContext CreateWalkContext(ILoggerFactory loggerFactory)
+        {
+            if(_context != null)
+            {
+                return _context;
+            }
+
+            var log = loggerFactory.CreateLogger<RestoreRequest>();
+
+            // Set up the walk context
+            var context = new RemoteWalkContext();
+
+            context.ProjectLibraryProviders.Add(
+                new LocalDependencyProvider(
+                    new PackageSpecReferenceDependencyProvider(
+                        new PackageSpecResolver(Project.BaseDirectory))));
+
+            if (ExternalProjects != null)
+            {
+                context.ProjectLibraryProviders.Add(
+                    new LocalDependencyProvider(
+                        new ExternalProjectReferenceDependencyProvider(ExternalProjects)));
+            }
+
+            context.LocalLibraryProviders.Add(
+                new SourceRepositoryDependencyProvider(PackagesDirectory.SourceRepository, loggerFactory));
+
+            foreach (var provider in Sources.Select(s => CreateProviderFromSource(s, loggerFactory, log, NoCache)))
+            {
+                context.RemoteLibraryProviders.Add(provider);
+            }
+
+            return context;
+        }
+
+        private IRemoteDependencyProvider CreateProviderFromSource(PackageSource source, ILoggerFactory loggerFactory, ILogger log, bool noCache)
+        {
+            log.LogVerbose($"Using source {source.Source}");
+            var nugetRepository = Repository.Factory.GetCoreV3(source.Source);
+            return new SourceRepositoryDependencyProvider(nugetRepository, loggerFactory, noCache);
+        }
     }
 }
