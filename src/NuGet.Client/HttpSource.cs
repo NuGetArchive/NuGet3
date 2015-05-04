@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using NuGet.Common;
 using System.Net;
+using System.Globalization;
 
 namespace NuGet.Client
 {
@@ -96,11 +97,11 @@ namespace NuGet.Client
             var result = await TryCache(uri, cacheKey, cacheAgeLimit);
             if (result.Stream != null)
             {
-                _logger.WriteInformation(string.Format("  {0} {1}", "CACHE".Green(), uri));
+                _logger.WriteInformation(string.Format(CultureInfo.InvariantCulture, "  {0} {1}", "CACHE".Green(), uri));
                 return result;
             }
 
-            _logger.WriteQuiet(string.Format("  {0} {1}.", "GET".Yellow(), uri));
+            _logger.WriteQuiet(string.Format(CultureInfo.InvariantCulture, "  {0} {1}.", "GET".Yellow(), uri));
 
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
             if (_userName != null)
@@ -177,7 +178,8 @@ namespace NuGet.Client
                 return 0;
             });
 
-            _logger.WriteQuiet(string.Format("  {1} {0} {2}ms", uri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
+            _logger.WriteQuiet(string.Format(CultureInfo.InvariantCulture, "  {1} {0} {2}ms", 
+                uri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
 
             return result;
         }

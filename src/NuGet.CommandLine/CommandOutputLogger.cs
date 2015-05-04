@@ -43,7 +43,7 @@ namespace NuGet.CommandLine
             {
                 lock(_consoleLock)
                 {
-                    AnsiConsole.Output.WriteLine(string.Format("{0}: {1}", Caption(logLevel), formatter(state, exception)));
+                    AnsiConsole.GetOutput(useConsoleColor: true).WriteLine(string.Format("{0}: {1}", Caption(logLevel), formatter(state, exception)));
                 }
             }
         }
