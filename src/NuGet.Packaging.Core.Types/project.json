@@ -5,9 +5,6 @@
     },
     "frameworks": {
         "net45": { },
-        "dnxcore50": {
-            "dependencies": {
-            }
-        }
+        "dnxcore50": { }
     }
 }
