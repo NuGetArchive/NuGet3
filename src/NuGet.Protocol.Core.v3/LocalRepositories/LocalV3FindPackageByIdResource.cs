@@ -40,20 +40,21 @@ namespace NuGet.Protocol.Core.v3.LocalRepositories
             return Task.FromResult(result);
         }
 
-        public override Task<NuspecReader> GetNuspecReaderAsync(string id, NuGetVersion version, CancellationToken token)
+        public override Task<FindPackageByIdDependencyInfo> GetDependencyInfoAsync(string id, NuGetVersion version, CancellationToken token)
         {
             var info = GetPackageInfo(id, version);
-            NuspecReader nuspecReader = null;
+            FindPackageByIdDependencyInfo dependencyInfo = null;
             if (info != null)
             {
                 var nuspecPath = Path.Combine(info.Path, $"{id}.nuspec");
                 using (var stream = File.OpenRead(nuspecPath))
                 {
-                    nuspecReader = new NuspecReader(stream);
+                    var nuspecReader = new NuspecReader(stream);
+                    dependencyInfo = GetDependencyInfo(nuspecReader);
                 }
             }
 
-            return Task.FromResult(nuspecReader);
+            return Task.FromResult(dependencyInfo);
         }
 
         private PackageInfo GetPackageInfo(string id, NuGetVersion version)

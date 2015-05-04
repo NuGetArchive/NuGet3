@@ -7,49 +7,33 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Linq;
 using Microsoft.Framework.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NuGet.Common;
-using NuGet.Configuration;
 using NuGet.Packaging;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 
 namespace NuGet.Protocol.Core.v3.RemoteRepositories
 {
-    public class RemoteV2FindPackageByIdResourcce : FindPackageByIdResource
+    public class BlobBasedRemoteV3FindPackageByIdResource : FindPackageByIdResource
     {
-        private static readonly XName _xnameEntry = XName.Get("entry", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameTitle = XName.Get("title", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameContent = XName.Get("content", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameLink = XName.Get("link", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameProperties = XName.Get("properties", "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata");
-        private static readonly XName _xnameId = XName.Get("Id", "http://schemas.microsoft.com/ado/2007/08/dataservices");
-        private static readonly XName _xnameVersion = XName.Get("Version", "http://schemas.microsoft.com/ado/2007/08/dataservices");
-        private static readonly XName _xnamePublish = XName.Get("Published", "http://schemas.microsoft.com/ado/2007/08/dataservices");
-
-        // An unlisted package's publish time must be 1900-01-01T00:00:00.
-        private static readonly DateTime _unlistedPublishedTime = new DateTime(1900, 1, 1, 0, 0, 0);
-
-        private readonly string _baseUri;
         private readonly HttpSource _httpSource;
-        private readonly Dictionary<string, Task<IEnumerable<PackageInfo>>> _packageVersionsCache = new Dictionary<string, Task<IEnumerable<PackageInfo>>>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, Task<NupkgEntry>> _nupkgCache = new Dictionary<string, Task<NupkgEntry>>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Task<IEnumerable<PackageInfo>>> _packageInfoCache = new Dictionary<string, Task<IEnumerable<PackageInfo>>>();
+        private readonly Dictionary<string, Task<NupkgEntry>> _nupkgCache = new Dictionary<string, Task<NupkgEntry>>();
         private bool _ignored;
 
         private TimeSpan _cacheAgeLimitList;
         private TimeSpan _cacheAgeLimitNupkg;
 
-        public RemoteV2FindPackageByIdResourcce(PackageSource packageSource)
+        public BlobBasedRemoteV3FindPackageByIdResource(Uri baseUri)
         {
-            _baseUri = packageSource.Source.EndsWith("/") ? packageSource.Source : (packageSource.Source + "/");
-            _httpSource = new HttpSource(new Uri(_baseUri), packageSource.UserName, packageSource.Password);
-
-            PackageSource = packageSource;
+            BaseUri = baseUri;
+            _httpSource = new HttpSource(baseUri, userName: null, password: null);
         }
 
-        public PackageSource PackageSource { get; }
+        public Uri BaseUri { get; }
 
         public override ILogger Logger
         {
@@ -90,8 +74,8 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
 
         public override async Task<IEnumerable<NuGetVersion>> GetAllVersionsAsync(string id, CancellationToken cancellationToken)
         {
-            var result = await EnsurePackagesAsync(id, cancellationToken);
-            return result.Select(item => item.Version);
+            var packageInfos = await EnsurePackagesAsync(id, cancellationToken);
+            return packageInfos.Select(p => p.Version);
         }
 
         public override async Task<FindPackageByIdDependencyInfo> GetDependencyInfoAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
@@ -129,12 +113,12 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
         {
             Task<IEnumerable<PackageInfo>> task;
 
-            lock (_packageVersionsCache)
+            lock (_packageInfoCache)
             {
-                if (!_packageVersionsCache.TryGetValue(id, out task))
+                if (!_packageInfoCache.TryGetValue(id, out task))
                 {
                     task = FindPackagesByIdAsyncCore(id, cancellationToken);
-                    _packageVersionsCache[id] = task;
+                    _packageInfoCache[id] = task;
                 }
             }
 
@@ -143,117 +127,84 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
 
         private async Task<IEnumerable<PackageInfo>> FindPackagesByIdAsyncCore(string id, CancellationToken cancellationToken)
         {
-            for (var retry = 0; retry != 3; ++retry)
+            for (int retry = 0; retry != 3; ++retry)
             {
                 if (_ignored)
                 {
-                    return new List<PackageInfo>();
+                    return Enumerable.Empty<PackageInfo>();
                 }
 
                 try
                 {
-                    var uri = _baseUri + "FindPackagesById()?Id='" + id + "'";
+                    var uri = id.ToLowerInvariant() + "/index.json";
                     var results = new List<PackageInfo>();
-                    var page = 1;
-                    while (true)
+                    using (var data = await _httpSource.GetAsync(uri,
+                        $"list_{id}",
+                        retry == 0 ? _cacheAgeLimitList : TimeSpan.Zero,
+                        ignoreNotFounds: true,
+                        cancellationToken: cancellationToken))
                     {
-                        // TODO: Pages for a package Id are cached separately.
-                        // So we will get inaccurate data when a page shrinks.
-                        // However, (1) In most cases the pages grow rather than shrink;
-                        // (2) cache for pages is valid for only 30 min.
-                        // So we decide to leave current logic and observe.
-                        using (var data = await _httpSource.GetAsync(uri, $"list_{id}_page{page}", retry == 0 ? _cacheAgeLimitList : TimeSpan.Zero, cancellationToken))
+                        if (data.Stream == null)
                         {
-                            try
+                            return Enumerable.Empty<PackageInfo>();
+                        }
+
+                        try
+                        {
+                            JObject doc;
+                            using (var reader = new StreamReader(data.Stream))
                             {
-                                var doc = XDocument.Load(data.Stream);
-
-                                var result = doc.Root
-                                    .Elements(_xnameEntry)
-                                    .Select(x => BuildModel(id, x))
-                                    .Where(x => x != null);
-
-                                results.AddRange(result);
-
-                                // Example of what this looks like in the odata feed:
-                                // <link rel="next" href="{nextLink}" />
-                                var nextUri = (from e in doc.Root.Elements(_xnameLink)
-                                               let attr = e.Attribute("rel")
-                                               where attr != null && string.Equals(attr.Value, "next", StringComparison.OrdinalIgnoreCase)
-                                               select e.Attribute("href") into nextLink
-                                               where nextLink != null
-                                               select nextLink.Value).FirstOrDefault();
-
-                                // Stop if there's nothing else to GET
-                                if (string.IsNullOrEmpty(nextUri))
-                                {
-                                    break;
-                                }
-
-                                uri = nextUri;
-                                page++;
+                                doc = JObject.Load(new JsonTextReader(reader));
                             }
-                            catch (XmlException)
-                            {
-                                Logger.LogInformation("The XML file {0} is corrupt", data.CacheFileName.Yellow().Bold());
-                                throw;
-                            }
+
+                            var result = doc["versions"]
+                                .Select(x => BuildModel(id, x.ToString()))
+                                .Where(x => x != null);
+
+                            results.AddRange(result);
+                        }
+                        catch
+                        {
+                            Logger.LogInformation("The file {0} is corrupt", data.CacheFileName.Yellow().Bold());
+                            throw;
                         }
                     }
 
                     return results;
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (retry < 2)
                 {
-                    if (retry == 2)
+                    Logger.LogInformation($"Warning: FindPackagesById: {id}{Environment.NewLine}  {ex.Message}".Yellow().Bold());
+                }
+                catch (Exception ex) when (retry == 2)
+                {
+                    // Fail silently by returning empty result list
+                    if (IgnoreFailure)
                     {
-                        // Fail silently by returning empty result list
-                        if (IgnoreFailure)
-                        {
-                            _ignored = true;
-                            Logger.LogInformation(
-                                string.Format("Failed to retrieve information from remote source '{0}'",
-                                    _baseUri).Yellow().Bold());
-                            return new List<PackageInfo>();
-                        }
+                        _ignored = true;
+                        Logger.LogWarning(
+                            $"Failed to retrieve information from remote source '{BaseUri}'".Yellow().Bold());
+                        return Enumerable.Empty<PackageInfo>();
+                    }
 
-                        Logger.LogError(string.Format("Error: FindPackagesById: {1}\r\n  {0}",
-                            ex.Message, id).Red().Bold());
-                        throw;
-                    }
-                    else
-                    {
-                        Logger.LogInformation(string.Format("Warning: FindPackagesById: {1}\r\n  {0}", ex.Message, id).Yellow().Bold());
-                    }
+                    Logger.LogError($"Error: FindPackagesById: {id}{Environment.NewLine}  {ex.Message}".Red().Bold());
+                    throw;
                 }
             }
+
             return null;
         }
 
-        private static PackageInfo BuildModel(string id, XElement element)
+        private PackageInfo BuildModel(string id, string version)
         {
-            var properties = element.Element(_xnameProperties);
-            var idElement = properties.Element(_xnameId);
-            var titleElement = element.Element(_xnameTitle);
-
-            var publishElement = properties.Element(_xnamePublish);
-            if (publishElement != null)
-            {
-                DateTime publishDate;
-                if (DateTime.TryParse(publishElement.Value, out publishDate) && (publishDate == _unlistedPublishedTime))
-                {
-                    return null;
-                }
-            }
-
             return new PackageInfo
             {
                 // If 'Id' element exist, use its value as accurate package Id
                 // Otherwise, use the value of 'title' if it exist
                 // Use the given Id as final fallback if all elements above don't exist
-                Id = idElement?.Value ?? titleElement?.Value ?? id,
-                Version = NuGetVersion.Parse(properties.Element(_xnameVersion).Value),
-                ContentUri = element.Element(_xnameContent).Attribute("src").Value,
+                Id = id,
+                Version = NuGetVersion.Parse(version),
+                ContentUri = BaseUri + id.ToLowerInvariant() + "/" + version.ToLowerInvariant() + "/" + id.ToLowerInvariant() + "." + version.ToLowerInvariant() + ".nupkg",
             };
         }
 
