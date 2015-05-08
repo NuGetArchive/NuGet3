@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -61,9 +60,7 @@ namespace NuGet.Protocol.Core.v2
             else
             {
                 // TODO: move the string into a resoure file
-                throw new InvalidOperationException(string.Format(
-                    CultureInfo.CurrentCulture,
-                    "Unable to get download metadata for package {0}", identity.Id));
+                throw new NuGetProtocolException(Strings.FormatProtocol_PackageMetadataError(V2Client.Source, identity));
             }
         }
 
@@ -74,24 +71,31 @@ namespace NuGet.Protocol.Core.v2
 
             var version = SemanticVersion.Parse(identity.Version.ToString());
 
-            // attempt a normal lookup first
-            if (!V2Client.TryFindPackage(identity.Id, version, out package))
+            try
             {
-                // skip further look ups for online repos
-                var v2Online = V2Client as DataServicePackageRepository;
-
-                if (v2Online == null)
+                // attempt a normal lookup first
+                if (!V2Client.TryFindPackage(identity.Id, version, out package))
                 {
-                    var versionComparer = VersionComparer.VersionRelease;
+                    // skip further look ups for online repos
+                    var v2Online = V2Client as DataServicePackageRepository;
 
-                    // otherwise search further to find the package - this is needed for v2 non-normalized versions
-                    V2Client.FindPackagesById(identity.Id).Any(p => versionComparer.Equals(identity.Version, NuGetVersion.Parse(p.ToString())));
+                    if (v2Online == null)
+                    {
+                        var versionComparer = VersionComparer.VersionRelease;
+
+                        // otherwise search further to find the package - this is needed for v2 non-normalized versions
+                        V2Client.FindPackagesById(identity.Id).Any(p => versionComparer.Equals(identity.Version, NuGetVersion.Parse(p.ToString())));
+                    }
+                }
+
+                if (package != null)
+                {
+                    result = package.GetStream();
                 }
             }
-
-            if (package != null)
+            catch (Exception ex)
             {
-                result = package.GetStream();
+                throw new NuGetProtocolException(Strings.FormatProtocol_FailedToDownloadPackage(identity, V2Client.Source), ex);
             }
 
             return Task.FromResult(result);
