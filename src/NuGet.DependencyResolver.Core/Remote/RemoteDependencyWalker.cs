@@ -331,7 +331,7 @@ namespace NuGet.DependencyResolver
                 // If we found an exact match then use it.
                 // This allows us to shortcircuit slow feeds even if there's an exact match
                 if (!libraryRange.VersionRange.IsFloating &&
-                    match != null &&
+                    match?.Library != null &&
                     match.Library.Version.Equals(libraryRange.VersionRange.MinVersion))
                 {
                     return match;

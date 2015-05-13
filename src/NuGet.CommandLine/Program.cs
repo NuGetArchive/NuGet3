@@ -75,7 +75,7 @@ namespace NuGet.CommandLine
                             var packagesDir = packagesDirectory.HasValue() ?
                                 packagesDirectory.Value() :
                                 Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), ".dnx", "packages");
-                            _log.LogVerbose($"Using packages directory: {packagesDirectory}");
+                            _log.LogVerbose($"Using packages directory: {packagesDir}");
 
                             // Run the restore
                             var request = new RestoreRequest(
