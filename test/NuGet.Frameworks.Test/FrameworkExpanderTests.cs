@@ -66,9 +66,11 @@ namespace NuGet.Test
             FrameworkExpander expander = new FrameworkExpander();
             var expanded = expander.Expand(framework).ToArray();
 
-            Assert.Equal(2, expanded.Length);
+            Assert.Equal(4, expanded.Length);
             Assert.Equal(".NETFramework,Version=v4.5,Profile=Client", expanded[0].ToString());
             Assert.Equal(".NETFramework,Version=v4.5,Profile=Full", expanded[1].ToString());
+            Assert.Equal("CoreCLR,Version=v5.0", expanded[2].ToString());
+            Assert.Equal("CoreCLR,Version=v0.0", expanded[3].ToString());
         }
 
         [Fact]

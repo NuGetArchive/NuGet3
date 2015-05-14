@@ -212,11 +212,9 @@ namespace NuGet.Test
         }
 
         [Theory]
-        [InlineData("net45")]
-        [InlineData("netcore45")]
-        [InlineData("win8")]
+        [InlineData("net40")]
         [InlineData("native")]
-        [InlineData("dnx451")]
+        [InlineData("sl20")]
         public void Compatibility_CoreCompatNeg(string framework)
         {
             var framework1 = NuGetFramework.Parse(framework);
@@ -228,7 +226,10 @@ namespace NuGet.Test
         }
 
         [Theory]
+        [InlineData("net45")]
+        [InlineData("net451")]
         [InlineData("net46")]
+        [InlineData("dnx451")]
         [InlineData("dnx46")]
         [InlineData("dnxcore50")]
         [InlineData("dnxcore")]
