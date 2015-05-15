@@ -38,7 +38,10 @@ namespace NuGet.Protocol.Core.v3
             var url = source.PackageSource.Source;
 
             // the file type can easily rule out if we need to request the url
-            if (url.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            if (source.PackageSource.ProtocolVersion == 3 ||
+
+                (source.PackageSource.IsHttp &&
+                url.EndsWith(".json", StringComparison.OrdinalIgnoreCase)))
             {
                 // check the cache before downloading the file
                 if (!_cache.TryGetValue(url, out index))
@@ -48,33 +51,34 @@ namespace NuGet.Protocol.Core.v3
                     var client = new DataClient(messageHandlerResource.MessageHandler);
 
                     JObject json;
-                    
+
                     try
                     {
                         json = await client.GetJObjectAsync(new Uri(url), token);
                     }
-                    catch (JsonReaderException ex)
+                    catch (JsonReaderException)
                     {
-                        throw new NuGetProtocolException(Strings.FormatProtocol_MalformedMetadataError(url), ex);
+                        _cache.TryAdd(url, value: null);
+                        return new Tuple<bool, INuGetResource>(index != null, index);
                     }
-                    catch (HttpRequestException ex)
+                    catch (HttpRequestException)
                     {
-                        throw new NuGetProtocolException(Strings.FormatProtocol_BadSource(url), ex);
+                        _cache.TryAdd(url, value: null);
+                        return new Tuple<bool, INuGetResource>(index != null, index);
                     }
 
                     if (json != null)
                     {
                         // Use SemVer instead of NuGetVersion, the service index should always be
                         // in strict SemVer format
-                        SemanticVersion version = null;
-                        var status = json.Value<string>("version");
-                        if (status != null
-                            && SemanticVersion.TryParse(status, out version))
+                        SemanticVersion version;
+                        JToken versionToken;
+                        if (json.TryGetValue("version", out versionToken) &&
+                            versionToken.Type == JTokenType.String &&
+                            SemanticVersion.TryParse((string)versionToken, out version) &&
+                            version.Major == 3)
                         {
-                            if (version.Major == 3)
-                            {
-                                index = new ServiceIndexResourceV3(json, DateTime.UtcNow);
-                            }
+                            index = new ServiceIndexResourceV3(json, DateTime.UtcNow);
                         }
                     }
                 }
