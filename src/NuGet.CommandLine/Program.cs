@@ -74,13 +74,21 @@ namespace NuGet.CommandLine
                             // TODO: Do this for real :) 
                             var packagesDir = packagesDirectory.HasValue() ?
                                 packagesDirectory.Value() :
-                                Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), ".dnx", "packages");
+                                Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), ".nuget", "packages");
                             _log.LogVerbose($"Using packages directory: {packagesDir}");
+
+                            var packageSources = sources.Values.Select(s => new PackageSource(s));
+                            if (!packageSources.Any())
+                            {
+                                var settings = Settings.LoadDefaultSettings(projectDirectory, configFileName: "packages.config", machineWideSettings: null);
+                                var packageSourceProvider = new PackageSourceProvider(settings);
+                                packageSources = packageSourceProvider.LoadPackageSources();
+                            }
 
                             // Run the restore
                             var request = new RestoreRequest(
                                 project,
-                                sources.Values.Select(s => new PackageSource(s)),
+                                packageSources,
                                 packagesDir);
                             if (parallel.HasValue())
                             {
