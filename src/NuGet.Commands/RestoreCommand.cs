@@ -51,14 +51,25 @@ namespace NuGet.Commands
             _log.LogWarning("TODO: Read and use lock file");
 
             // Load repositories
+            // if (request.Project.FilePath)
+
             var projectResolver = new PackageSpecResolver(request.Project.BaseDirectory);
             var nugetRepository = Repository.Factory.GetCoreV3(request.PackagesDirectory);
 
             var context = new RemoteWalkContext();
 
+            ExternalProjectReference exterenalProjectReference = null;
+            if (request.ExternalProjects.Any())
+            {
+                exterenalProjectReference = new ExternalProjectReference(
+                    request.Project.Name, 
+                    request.Project.FilePath, 
+                    request.ExternalProjects.Select(p => p.Name));
+            }
+
             context.ProjectLibraryProviders.Add(
                 new LocalDependencyProvider(
-                    new PackageSpecReferenceDependencyProvider(projectResolver)));
+                    new PackageSpecReferenceDependencyProvider(projectResolver, exterenalProjectReference)));
 
             if (request.ExternalProjects != null)
             {
