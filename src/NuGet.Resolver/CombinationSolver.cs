@@ -18,6 +18,8 @@ namespace NuGet.Resolver
     /// <typeparam name="T">The type of item to evaluate.</typeparam>
     public class CombinationSolver<T>
     {
+        private readonly Func<IEnumerable<int>, int> _max = Max;
+
         private readonly T[] _solution;
 
         /// <summary>
@@ -33,13 +35,13 @@ namespace NuGet.Resolver
         /// discover that an item cannot be part of the solution. If we need to backtrack,
         /// we may reset the current domain to the corresponding initial domain.
         /// </summary>
-        private readonly List<HashSet<T>> _currentDomains;
+        private readonly List<SortedSet<T>> _currentDomains;
 
         /// <summary>
         /// The subset of past indexes where a conflict was found. Used to calculate the biggest and safest
         /// (i.e. not missing a better solution) jump we can make in MoveBackward.
         /// </summary>
-        private readonly List<HashSet<int>> _conflictSet;
+        private readonly List<SortedSet<int>> _conflictSet;
 
         /// <summary>
         /// For each position, maintain a stack of past indexes that forward checked (and found/removed conflicts)
@@ -73,8 +75,8 @@ namespace NuGet.Resolver
             _initialDomains = groupedItems.ToList();
 
             // Initialize various arrays required for the algorithm to run.
-            _currentDomains = initialDomains.Select(d => new HashSet<T>(d)).ToList();
-            _conflictSet = initialDomains.Select(d => new HashSet<int>()).ToList();
+            _currentDomains = initialDomains.Select(d => new SortedSet<T>(d, itemSorter)).ToList();
+            _conflictSet = initialDomains.Select(d => new SortedSet<int>()).ToList();
             _pastForwardChecking = initialDomains.Select(d => new Stack<int>()).ToList();
             _futureForwardChecking = initialDomains.Select(d => new Stack<int>()).ToList();
             _reductions = initialDomains.Select(d => new Stack<Stack<T>>()).ToList();
@@ -170,7 +172,7 @@ namespace NuGet.Resolver
             consistent = false;
 
             //Call ToList so we can potentially remove the currentItem from currentDomains[i] as we're iterating
-            foreach (var currentItem in _currentDomains[i].OrderBy(x => x, _prioritySorter).ToList())
+            foreach (var currentItem in _currentDomains[i].ToArray())
             {
                 if (consistent)
                 {
@@ -216,7 +218,7 @@ namespace NuGet.Resolver
             if (i == 0
                 && !consistent)
             {
-                //We're being asked to back up from the starting position. No solution is possible.
+                // We're being asked to back up from the starting position. No solution is possible.
                 return -1;
             }
 
@@ -224,7 +226,13 @@ namespace NuGet.Resolver
 
             //h is the index we can *safely* move back to
             var h = Math.Max(max(_conflictSet[i]), max(_pastForwardChecking[i]));
-            _conflictSet[h] = new HashSet<int>(_conflictSet[i].Union(_pastForwardChecking[i]).Union(_conflictSet[h]).Except(new[] { h }));
+
+            var set = new SortedSet<int>(_conflictSet[i]);
+            set.UnionWith(_pastForwardChecking[i]);
+            set.UnionWith(_conflictSet[h]);
+            set.Remove(h);
+
+            _conflictSet[h] = set;
 
             for (var j = i; j > h; j--)
             {
@@ -253,7 +261,7 @@ namespace NuGet.Resolver
         private bool CheckForward(int i, int j)
         {
             var reductionAgainstFutureDomain = new Stack<T>();
-            foreach (var itemInFutureDomain in _currentDomains[j].OrderBy(x => x, _prioritySorter))
+            foreach (var itemInFutureDomain in _currentDomains[j])
             {
                 _solution[j] = itemInFutureDomain;
 
@@ -290,6 +298,7 @@ namespace NuGet.Resolver
             foreach (var j in _futureForwardChecking[i])
             {
                 var reduction = _reductions[j].Pop();
+
                 _currentDomains[j].UnionWith(reduction);
 
                 var pfc = _pastForwardChecking[j].Pop();
@@ -308,13 +317,18 @@ namespace NuGet.Resolver
             // Initialize it to the original domain values. Since currentDomain[i] will be
             // manipulated throughout the algorithm, it is critical to create a *new* set at this
             // point to avoid having initialDomains[i] be tampered with.
-            _currentDomains[i] = new HashSet<T>(_initialDomains[i]);
+            _currentDomains[i] = new SortedSet<T>(_initialDomains[i], _prioritySorter);
 
             //Remove any current reduction items
             foreach (var reduction in _reductions[i])
             {
                 _currentDomains[i].ExceptWith(reduction);
             }
+        }
+
+        private static int Max(IEnumerable<int> sequence)
+        {
+            return sequence?.Max() ?? 0;
         }
     }
 }

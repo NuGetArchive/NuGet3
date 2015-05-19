@@ -210,7 +210,8 @@ namespace NuGet.Resolver.Test
                 for (int j = 1; j < 10; j++)
                 {
                     next = j + 1;
-                    sourceRepository.Add(CreatePackage($"Package{j}", $"2.0.{i}", new Dictionary<string, string>() { { $"Package{next}", "1.0.0" } }));
+                    sourceRepository.Add(CreatePackage($"Package{j}", $"2.0.{i}",
+                        new Dictionary<string, string>() { { $"Package{next}", "1.0.0" } }));
                 }
             }
 
@@ -225,6 +226,63 @@ namespace NuGet.Resolver.Test
 
             // Assert
             Assert.Equal(11, packages.Count());
+        }
+
+        [Fact]
+        public void ResolveDependenciesForLargeSet_WithLowerAvailable()
+        {
+            // Arrange
+            var target = CreatePackage("Package0", "1.0", new Dictionary<string, string>() {
+                { "Package1", "1.0.0-beta9" },
+                { "Package2", "1.0.0-beta9" },
+                { "Package3", "1.0.0-beta9" },
+                { "Package4", "1.0.0-beta9" },
+                { "Package5", "1.0.0-beta9" },
+                { "Package6", "1.0.0-beta9" },
+                { "Package7", "1.0.0-beta9" },
+                { "Package8", "1.0.0-beta9" },
+            });
+
+            var sourceRepository = new List<ResolverPackage>();
+            sourceRepository.Add(target);
+
+            int next = -1;
+
+            // make lots of packages
+            for (int i = 0; i < 20; i++)
+            {
+                for (int j = 1; j < 9; j++)
+                {
+                    next = j + 1;
+
+                    var package = CreatePackage($"Package{j}", $"1.0.0-beta{i}",
+                        new Dictionary<string, string>() { { $"Package{next}", $"1.0.0-beta{i}" } });
+
+                    sourceRepository.Add(package);
+                }
+            }
+
+            sourceRepository.Add(CreatePackage($"Package{next}", "1.0.0-beta9"));
+
+            var resolver = new PackageResolver();
+
+            var context = CreatePackageResolverContext(DependencyBehavior.Lowest, target, sourceRepository);
+
+            // Act
+            var packages = resolver.Resolve(context, CancellationToken.None).ToList();
+
+            // Assert
+            //Assert.Equal(10, packages.Count());
+
+            //Assert.Equal(packages[9].Version.Major, 1);
+            //Assert.Equal(packages[9].Id, "Package0");
+
+            //for (int i = 0; i < packages.Count - 1; i++)
+            //{
+            //    var package = packages[i];
+            //    Assert.Equal(1, package.Version.Major);
+            //    Assert.Equal("beta9", packages[i].Version.Release);
+            //}
         }
 
         [Fact]
