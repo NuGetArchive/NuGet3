@@ -107,6 +107,38 @@ namespace NuGet.Protocol.Core.v3
         }
 
         /// <summary>
+        /// Error downloading package from {0}.{1} {2}
+        /// </summary>
+        internal static string Error_DownloadingPackage
+        {
+            get { return GetString("Error_DownloadingPackage"); }
+        }
+
+        /// <summary>
+        /// Error downloading package from {0}.{1} {2}
+        /// </summary>
+        internal static string FormatError_DownloadingPackage(object p0, object p1, object p2)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Error_DownloadingPackage"), p0, p1, p2);
+        }
+
+        /// <summary>
+        /// The XML file '{0}' is corrupt.
+        /// </summary>
+        internal static string Error_XMLFileIsCorrupt
+        {
+            get { return GetString("Error_XMLFileIsCorrupt"); }
+        }
+
+        /// <summary>
+        /// The XML file '{0}' is corrupt.
+        /// </summary>
+        internal static string FormatError_XMLFileIsCorrupt(object p0)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Error_XMLFileIsCorrupt"), p0);
+        }
+
+        /// <summary>
         /// Failed to download package from '{0}'.
         /// </summary>
         internal static string Log_FailedToDownloadPackage
@@ -376,6 +408,38 @@ namespace NuGet.Protocol.Core.v3
         internal static string FormatRequiredFeatureUnsupportedException_DefaultMessageWithoutFeature()
         {
             return GetString("RequiredFeatureUnsupportedException_DefaultMessageWithoutFeature");
+        }
+
+        /// <summary>
+        /// Error retrieving versions for '{0}'. Retrying...{1} {2}
+        /// </summary>
+        internal static string Warning_FindPackagesByIdErrorRetry
+        {
+            get { return GetString("Warning_FindPackagesByIdErrorRetry"); }
+        }
+
+        /// <summary>
+        /// Error retrieving versions for '{0}'. Retrying...{1} {2}
+        /// </summary>
+        internal static string FormatWarning_FindPackagesByIdErrorRetry(object p0, object p1, object p2)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Warning_FindPackagesByIdErrorRetry"), p0, p1, p2);
+        }
+
+        /// <summary>
+        /// Unable to find package {0} {1}
+        /// </summary>
+        internal static string Warning_UnableToFind
+        {
+            get { return GetString("Warning_UnableToFind"); }
+        }
+
+        /// <summary>
+        /// Unable to find package {0} {1}
+        /// </summary>
+        internal static string FormatWarning_UnableToFind(object p0, object p1)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Warning_UnableToFind"), p0, p1);
         }
 
         private static string GetString(string name, params string[] formatterNames)

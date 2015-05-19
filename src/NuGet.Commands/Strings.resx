@@ -117,7 +117,37 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Debug_MergingRuntimes" xml:space="preserve">
+    <value>Adding runtime definitions defined in {0}.</value>
+  </data>
+  <data name="Error_FailedToResolveConflicts" xml:space="preserve">
+    <value>Failed to resolve conflicts.</value>
+  </data>
+  <data name="Error_NoTargetFrameworks" xml:space="preserve">
+    <value>The project does not specify any target frameworks.</value>
+  </data>
+  <data name="Info_GeneratingMSBuildFile" xml:space="preserve">
+    <value>Generating MSBuild file '{0}'</value>
+  </data>
+  <data name="Info_RestoringForFramework" xml:space="preserve">
+    <value>Restoring packages for framework: '{0}'.</value>
+  </data>
+  <data name="Info_RestoringForFrameworkAndRuntime" xml:space="preserve">
+    <value>Restoring packages for framework: '{0}' and runtime: '{1}'.</value>
+  </data>
+  <data name="Info_RestoringForProject" xml:space="preserve">
+    <value>Restoring packages for project: '{0}'.</value>
+  </data>
   <data name="MSBuildWarning_MultiTarget" xml:space="preserve">
     <value>Packages containing MSBuild targets and props files cannot be fully installed in projects targeting multiple frameworks. The MSBuild targets and props files have been ignored.</value>
+  </data>
+  <data name="Verbose_ScanningForRuntimeJson" xml:space="preserve">
+    <value>Scanning packages for runtime.json files...</value>
+  </data>
+  <data name="Verbose_SkippingRuntimeWalk" xml:space="preserve">
+    <value>No runtimes defined in project.json. Skipping runtime dependency walk.</value>
+  </data>
+  <data name="Verbose_UsingSource" xml:space="preserve">
+    <value>Using source {0}.</value>
   </data>
 </root>

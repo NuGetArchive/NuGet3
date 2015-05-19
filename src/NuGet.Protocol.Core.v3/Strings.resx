@@ -135,6 +135,12 @@
   <data name="DownloadActionHandler_NoDownloadUrl" xml:space="preserve">
     <value>No download URL could be found for {0}.</value>
   </data>
+  <data name="Error_DownloadingPackage" xml:space="preserve">
+    <value>Error downloading package from {0}.{1} {2}</value>
+  </data>
+  <data name="Error_XMLFileIsCorrupt" xml:space="preserve">
+    <value>The XML file '{0}' is corrupt.</value>
+  </data>
   <data name="Log_FailedToDownloadPackage" xml:space="preserve">
     <value>Failed to download package from '{0}'.</value>
   </data>
@@ -185,5 +191,11 @@
   </data>
   <data name="RequiredFeatureUnsupportedException_DefaultMessageWithoutFeature" xml:space="preserve">
     <value>The installation host does not support a feature required by this package.</value>
+  </data>
+  <data name="Warning_FindPackagesByIdErrorRetry" xml:space="preserve">
+    <value>Error retrieving versions for '{0}'. Retrying...{1} {2}</value>
+  </data>
+  <data name="Warning_UnableToFind" xml:space="preserve">
+    <value>Unable to find package {0} {1}</value>
   </data>
 </root>

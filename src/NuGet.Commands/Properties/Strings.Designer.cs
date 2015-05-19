@@ -11,6 +11,118 @@ namespace NuGet.Commands
             = new ResourceManager("NuGet.Commands.Strings", typeof(Strings).GetTypeInfo().Assembly);
 
         /// <summary>
+        /// Adding runtime definitions defined in {0}.
+        /// </summary>
+        internal static string Debug_MergingRuntimes
+        {
+            get { return GetString("Debug_MergingRuntimes"); }
+        }
+
+        /// <summary>
+        /// Adding runtime definitions defined in {0}.
+        /// </summary>
+        internal static string FormatDebug_MergingRuntimes(object p0)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Debug_MergingRuntimes"), p0);
+        }
+
+        /// <summary>
+        /// Failed to resolve conflicts.
+        /// </summary>
+        internal static string Error_FailedToResolveConflicts
+        {
+            get { return GetString("Error_FailedToResolveConflicts"); }
+        }
+
+        /// <summary>
+        /// Failed to resolve conflicts.
+        /// </summary>
+        internal static string FormatError_FailedToResolveConflicts()
+        {
+            return GetString("Error_FailedToResolveConflicts");
+        }
+
+        /// <summary>
+        /// The project does not specify any target frameworks.
+        /// </summary>
+        internal static string Error_NoTargetFrameworks
+        {
+            get { return GetString("Error_NoTargetFrameworks"); }
+        }
+
+        /// <summary>
+        /// The project does not specify any target frameworks.
+        /// </summary>
+        internal static string FormatError_NoTargetFrameworks()
+        {
+            return GetString("Error_NoTargetFrameworks");
+        }
+
+        /// <summary>
+        /// Generating MSBuild file '{0}'
+        /// </summary>
+        internal static string Info_GeneratingMSBuildFile
+        {
+            get { return GetString("Info_GeneratingMSBuildFile"); }
+        }
+
+        /// <summary>
+        /// Generating MSBuild file '{0}'
+        /// </summary>
+        internal static string FormatInfo_GeneratingMSBuildFile(object p0)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Info_GeneratingMSBuildFile"), p0);
+        }
+
+        /// <summary>
+        /// Restoring packages for framework: '{0}'.
+        /// </summary>
+        internal static string Info_RestoringForFramework
+        {
+            get { return GetString("Info_RestoringForFramework"); }
+        }
+
+        /// <summary>
+        /// Restoring packages for framework: '{0}'.
+        /// </summary>
+        internal static string FormatInfo_RestoringForFramework(object p0)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Info_RestoringForFramework"), p0);
+        }
+
+        /// <summary>
+        /// Restoring packages for framework: '{0}' and runtime: '{1}'.
+        /// </summary>
+        internal static string Info_RestoringForFrameworkAndRuntime
+        {
+            get { return GetString("Info_RestoringForFrameworkAndRuntime"); }
+        }
+
+        /// <summary>
+        /// Restoring packages for framework: '{0}' and runtime: '{1}'.
+        /// </summary>
+        internal static string FormatInfo_RestoringForFrameworkAndRuntime(object p0, object p1)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Info_RestoringForFrameworkAndRuntime"), p0, p1);
+        }
+
+        /// <summary>
+        /// Restoring packages for project: '{0}'.
+        /// </summary>
+        internal static string Info_RestoringForProject
+        {
+            get { return GetString("Info_RestoringForProject"); }
+        }
+
+        /// <summary>
+        /// Restoring packages for project: '{0}'.
+        /// </summary>
+        internal static string FormatInfo_RestoringForProject(object p0)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Info_RestoringForProject"), p0);
+        }
+
+        /// <summary>
         /// Packages containing MSBuild targets and props files cannot be fully installed in projects targeting multiple frameworks. The MSBuild targets and props files have been ignored.
         /// </summary>
         internal static string MSBuildWarning_MultiTarget
@@ -24,6 +136,54 @@ namespace NuGet.Commands
         internal static string FormatMSBuildWarning_MultiTarget()
         {
             return GetString("MSBuildWarning_MultiTarget");
+        }
+
+        /// <summary>
+        /// Scanning packages for runtime.json files...
+        /// </summary>
+        internal static string Verbose_ScanningForRuntimeJson
+        {
+            get { return GetString("Verbose_ScanningForRuntimeJson"); }
+        }
+
+        /// <summary>
+        /// Scanning packages for runtime.json files...
+        /// </summary>
+        internal static string FormatVerbose_ScanningForRuntimeJson()
+        {
+            return GetString("Verbose_ScanningForRuntimeJson");
+        }
+
+        /// <summary>
+        /// No runtimes defined in project.json. Skipping runtime dependency walk.
+        /// </summary>
+        internal static string Verbose_SkippingRuntimeWalk
+        {
+            get { return GetString("Verbose_SkippingRuntimeWalk"); }
+        }
+
+        /// <summary>
+        /// No runtimes defined in project.json. Skipping runtime dependency walk.
+        /// </summary>
+        internal static string FormatVerbose_SkippingRuntimeWalk()
+        {
+            return GetString("Verbose_SkippingRuntimeWalk");
+        }
+
+        /// <summary>
+        /// Using source {0}.
+        /// </summary>
+        internal static string Verbose_UsingSource
+        {
+            get { return GetString("Verbose_UsingSource"); }
+        }
+
+        /// <summary>
+        /// Using source {0}.
+        /// </summary>
+        internal static string FormatVerbose_UsingSource(object p0)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Verbose_UsingSource"), p0);
         }
 
         private static string GetString(string name, params string[] formatterNames)
