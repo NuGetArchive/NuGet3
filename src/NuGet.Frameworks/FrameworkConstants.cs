@@ -37,7 +37,7 @@ namespace NuGet.Frameworks
             public const string WindowsPhone = "WindowsPhone";
             public const string Windows = "Windows";
             public const string WindowsPhoneApp = "WindowsPhoneApp";
-            public const string CoreCLR = "CoreCLR";
+            public const string CoreCLR = "Core";
             public const string Dnx = "DNX";
             public const string DnxCore = "DNXCore";
             public const string AspNet = "ASP.NET";

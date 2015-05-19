@@ -92,6 +92,14 @@ namespace NuGet.Frameworks
                 {
                     var parts = new List<string>(3) { Framework };
 
+                    // Core50 should be written as .NETPortable,Version=v5.0
+                    if (string.Equals(FrameworkConstants.FrameworkIdentifiers.CoreCLR, Framework, StringComparison.OrdinalIgnoreCase) 
+                        && String.IsNullOrEmpty(Profile)
+                        && Version >= FrameworkConstants.Version5)
+                    {
+                        parts = new List<string>(3) { FrameworkConstants.FrameworkIdentifiers.Portable };
+                    }
+
                     parts.Add(String.Format(CultureInfo.InvariantCulture, "Version=v{0}", GetDisplayVersion(Version)));
 
                     if (!String.IsNullOrEmpty(Profile))

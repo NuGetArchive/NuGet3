@@ -105,7 +105,18 @@ namespace NuGet.Frameworks
                     profile = profilePart.Split('=')[1];
                 }
 
-                result = new NuGetFramework(platform, version, profile);
+                // .NETPortable v5.0 is Core50, any portable framework with a version >= 5 and no 
+                // profile should be treated as Core
+                if (String.IsNullOrEmpty(profile) 
+                    && version >= FrameworkConstants.Version5
+                    && string.Equals(platform, FrameworkConstants.FrameworkIdentifiers.Portable, StringComparison.OrdinalIgnoreCase))
+                {
+                    result = new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.CoreCLR, version);
+                }
+                else
+                {
+                    result = new NuGetFramework(platform, version, profile);
+                }
             }
 
             return result;
@@ -168,21 +179,30 @@ namespace NuGet.Frameworks
                                 profile = profileShort ?? string.Empty;
                             }
 
-                            if (StringComparer.OrdinalIgnoreCase.Equals(FrameworkConstants.FrameworkIdentifiers.Portable, framework))
+                            if (string.Equals(FrameworkConstants.FrameworkIdentifiers.Portable, framework, StringComparison.OrdinalIgnoreCase))
                             {
-                                IEnumerable<NuGetFramework> clientFrameworks = null;
-                                mappings.TryGetPortableFrameworks(profileShort, out clientFrameworks);
-
-                                var profileNumber = -1;
-                                if (mappings.TryGetPortableProfile(clientFrameworks, out profileNumber))
+                                // .NETPortable v5.0 is Core50, any portable framework with a version >= 5 and no 
+                                // profile should be treated as Core
+                                if (String.IsNullOrEmpty(profile) && version >= FrameworkConstants.Version5)
                                 {
-                                    var portableProfileNumber = FrameworkNameHelpers.GetPortableProfileNumberString(profileNumber);
-                                    result = new NuGetFramework(framework, version, portableProfileNumber);
+                                    result = new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.CoreCLR, version);
                                 }
                                 else
                                 {
-                                    // TODO: should this be unsupported?
-                                    result = new NuGetFramework(framework, version, profileShort);
+                                    // Portable with framework profiles
+                                    IEnumerable<NuGetFramework> clientFrameworks = null;
+                                    mappings.TryGetPortableFrameworks(profileShort, out clientFrameworks);
+
+                                    var profileNumber = -1;
+                                    if (mappings.TryGetPortableProfile(clientFrameworks, out profileNumber))
+                                    {
+                                        var portableProfileNumber = FrameworkNameHelpers.GetPortableProfileNumberString(profileNumber);
+                                        result = new NuGetFramework(framework, version, portableProfileNumber);
+                                    }
+                                    else
+                                    {
+                                        result = new NuGetFramework(framework, version, profileShort);
+                                    }
                                 }
                             }
                             else
