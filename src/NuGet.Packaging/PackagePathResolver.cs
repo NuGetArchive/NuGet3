@@ -16,25 +16,20 @@ namespace NuGet.Packaging
         {
             if (String.IsNullOrEmpty(rootDirectory))
             {
-                throw new ArgumentException(String.Format(Strings.StringCannotBeNullOrEmpty, "rootDirectory"));
+                throw new ArgumentException(String.Format(Strings.StringCannotBeNullOrEmpty, nameof(rootDirectory)));
             }
             _rootDirectory = rootDirectory;
             _useSideBySidePaths = useSideBySidePaths;
         }
 
-        protected internal string Root
-        {
-            get { return _rootDirectory; }
-        }
+        protected internal string Root => _rootDirectory;
 
-        public virtual string GetPackageDirectoryName(PackageIdentity packageIdentity, bool useLegacyPackageInstallPath = false)
+        public virtual string GetPackageDirectoryName(PackageIdentity packageIdentity)
         {
             var directoryName = packageIdentity.Id;
             if (_useSideBySidePaths)
             {
-                directoryName += ".";
-                // Always use legacy package install path. Otherwise, restore may be broken for packages like 'Microsoft.Web.Infrastructure.1.0.0.0', installed using old clients
-                directoryName += packageIdentity.Version.ToString(); // useLegacyPackageInstallPath ? packageIdentity.Version.ToString() : packageIdentity.Version.ToNormalizedString();
+                directoryName += "." + packageIdentity.Version.ToString();
             }
 
             return directoryName;
@@ -42,19 +37,12 @@ namespace NuGet.Packaging
 
         public virtual string GetPackageFileName(PackageIdentity packageIdentity)
         {
-            var fileNameBase = packageIdentity.Id;
-            if (_useSideBySidePaths)
-            {
-                // TODO: Nupkgs from the server will be normalized, but others might not be.
-                fileNameBase += "." + packageIdentity.Version.ToNormalizedString();
-            }
-
-            return fileNameBase + PackagingCoreConstants.NupkgExtension;
+            return GetPackageDirectoryName(packageIdentity) + PackagingCoreConstants.NupkgExtension;
         }
 
-        public virtual string GetInstallPath(PackageIdentity packageIdentity, bool useLegacyPackageInstallPath = false)
+        public virtual string GetInstallPath(PackageIdentity packageIdentity)
         {
-            return Path.Combine(_rootDirectory, GetPackageDirectoryName(packageIdentity, useLegacyPackageInstallPath));
+            return Path.Combine(_rootDirectory, GetPackageDirectoryName(packageIdentity));
         }
 
         public virtual string GetInstalledPath(PackageIdentity packageIdentity)

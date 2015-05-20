@@ -134,7 +134,7 @@ namespace NuGet.Resolver
                 if (packageOptions.Count() == 1 && (configEntry == null || !configEntry.HasAllowedVersions))
                 {
                     var problemPackageString = String.Format(CultureInfo.InvariantCulture, "{0} {1}",
-                        problemPackageId, packageOptions.First().Version.ToNormalizedString());
+                        problemPackageId, packageOptions.First().Version.ToString());
 
                     // Return an error with the problem package id and version, and all parent packages that might have caused the issue
                     message.AppendFormat(CultureInfo.CurrentCulture, Strings.VersionIsNotCompatible, problemPackageString, String.Join(", ", dependantPackages));
@@ -173,7 +173,7 @@ namespace NuGet.Resolver
                 range == null ? string.Empty : range.PrettyPrint()).Trim();
 
             // A 1.0.0 dependency: B (= 1.5)
-            return $"'{package.Id} {package.Version.ToNormalizedString()} {Strings.DependencyConstraint}: {dependencyString}'";
+            return $"'{package.Id} {package.Version.ToString()} {Strings.DependencyConstraint}: {dependencyString}'";
         }
 
         private static IEnumerable<PackageDependency> GetBrokenDependencies(ResolverPackage package, IEnumerable<ResolverPackage> packages)

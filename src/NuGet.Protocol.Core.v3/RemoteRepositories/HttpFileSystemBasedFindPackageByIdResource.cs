@@ -219,7 +219,7 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
         private PackageInfo BuildModel(string baseUri, string id, string version)
         {
             var parsedVersion = NuGetVersion.Parse(version);
-            var normalizedVersionString = parsedVersion.ToNormalizedString();
+            var versionString = parsedVersion.ToString();
             return new PackageInfo
                 {
                     // If 'Id' element exist, use its value as accurate package Id
@@ -227,7 +227,7 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
                     // Use the given Id as final fallback if all elements above don't exist
                     Id = id,
                     Version = parsedVersion,
-                    ContentUri = baseUri + id.ToLowerInvariant() + "/" + normalizedVersionString + "/" + id.ToLowerInvariant() + "." + normalizedVersionString + ".nupkg",
+                    ContentUri = baseUri + id.ToLowerInvariant() + "/" + versionString + "/" + id.ToLowerInvariant() + "." + versionString + ".nupkg",
                 };
         }
 
@@ -266,7 +266,7 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
                 {
                     using (var data = await _httpSource.GetAsync(
                         package.ContentUri,
-                        "nupkg_" + package.Id + "." + package.Version.ToNormalizedString(),
+                        "nupkg_" + package.Id + "." + package.Version.ToString(),
                         retry == 0 ? _cacheAgeLimitNupkg : TimeSpan.Zero,
                         cancellationToken))
                     {

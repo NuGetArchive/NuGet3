@@ -48,54 +48,6 @@ namespace NuGet.Protocol.Core.v3
         public Uri BaseUri { get; }
 
         /// <summary>
-        /// Constructs the URI of a registration index blob
-        /// </summary>
-        public virtual Uri GetUri(string packageId)
-        {
-            if (String.IsNullOrEmpty(packageId))
-            {
-                throw new InvalidOperationException();
-            }
-
-            return new Uri(String.Format(CultureInfo.InvariantCulture, "{0}/{1}/index.json",
-                BaseUri.AbsoluteUri.TrimEnd('/'), packageId.ToLowerInvariant()));
-        }
-
-        /// <summary>
-        /// Constructs the URI of a registration blob with a specific version
-        /// </summary>
-        public virtual Uri GetUri(string id, NuGetVersion version)
-        {
-            if (String.IsNullOrEmpty(id))
-            {
-                throw new ArgumentException(Strings.ArgumentCannotBeNullOrEmpty, nameof(id));
-            }
-
-            if (version == null)
-            {
-                throw new ArgumentNullException(nameof(version));
-            }
-
-            return GetUri(new PackageIdentity(id, version));
-        }
-
-        /// <summary>
-        /// Constructs the URI of a registration blob with a specific version
-        /// </summary>
-        public virtual Uri GetUri(PackageIdentity package)
-        {
-            if (package == null
-                || package.Id == null
-                || package.Version == null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            return new Uri(String.Format(CultureInfo.InvariantCulture, "{0}/{1}/{2}.json", BaseUri.AbsoluteUri.TrimEnd('/'),
-                package.Id.ToLowerInvariant(), package.Version.ToNormalizedString().ToLowerInvariant()));
-        }
-
-        /// <summary>
         /// Returns the registration blob for the id and version
         /// </summary>
         /// <remarks>The inlined entries are potentially going away soon</remarks>

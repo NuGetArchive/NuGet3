@@ -103,17 +103,17 @@ namespace NuGet.Packaging
         {
             if (packageIdentity == null)
             {
-                throw new ArgumentNullException("packageIdentity");
+                throw new ArgumentNullException(nameof(packageIdentity));
             }
 
             if (packageIdentity.Version == null)
             {
-                throw new ArgumentNullException("packageIdentity.Version");
+                throw new ArgumentNullException(nameof(packageIdentity) + ".Version");
             }
 
             if (packagePathResolver == null)
             {
-                throw new ArgumentNullException("packagePathResolver");
+                throw new ArgumentNullException(nameof(packagePathResolver));
             }
 
             var packageId = packageIdentity.Id;
@@ -124,9 +124,8 @@ namespace NuGet.Packaging
             // and we do not need to match this for id and version.
             var packageFileName = packagePathResolver.GetPackageFileName(packageIdentity);
             var manifestFileName = Path.ChangeExtension(packageFileName, PackagingCoreConstants.NuspecExtension);
-            var filesMatchingFullName = Enumerable.Concat(
-                GetPackageFiles(root, packageFileName),
-                GetPackageFiles(root, manifestFileName));
+            var filesMatchingFullName = GetPackageFiles(root, packageFileName)
+                .Concat(GetPackageFiles(root, manifestFileName));
 
             if (version != null
                 && version.Version.Revision < 1)
@@ -163,8 +162,7 @@ namespace NuGet.Packaging
                 foreach (var packageLookupPath in packageLookupPaths)
                 {
                     if (packageLookupPath.EndsWith(PackagingCoreConstants.NupkgExtension, StringComparison.OrdinalIgnoreCase)
-                        &&
-                        File.Exists(packageLookupPath))
+                        && File.Exists(packageLookupPath))
                     {
                         // This is an installed package lookup path which matches the packageIdentity for the given packagePathResolver
                         return packageLookupPath;

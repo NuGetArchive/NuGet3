@@ -71,7 +71,7 @@ namespace NuGet.Resolver.Test
             }
 
             // Assert
-            Assert.Equal("Unable to resolve dependencies. 'B 1.4.0' is not compatible with 'A 1.0.0 constraint: B (= 1.5.0)'.", message);
+            Assert.Equal("Unable to resolve dependencies. 'B 1.4' is not compatible with 'A 1.0 constraint: B (= 1.5.0)'.", message);
         }
 
         [Fact]
@@ -104,7 +104,7 @@ namespace NuGet.Resolver.Test
             }
 
             // Assert
-            Assert.Equal("Circular dependency detected 'A 1.0.0 => B 1.0.0 => A 1.0.0'.", message);
+            Assert.Equal("Circular dependency detected 'A 1.0 => B 1.0 => A 1.0'.", message);
         }
 
         [Fact]

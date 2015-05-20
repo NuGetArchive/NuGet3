@@ -182,7 +182,7 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
                 {
                     using (var data = await _httpSource.GetAsync(
                         package.ContentUri,
-                        "nupkg_" + package.Identity.Id + "." + package.Identity.Version.ToNormalizedString(),
+                        "nupkg_" + package.Identity.Id + "." + package.Identity.Version.ToString(),
                         retry == 0 ? _cacheAgeLimitNupkg : TimeSpan.Zero,
                         cancellationToken))
                     {

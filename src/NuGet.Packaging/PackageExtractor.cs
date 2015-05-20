@@ -9,13 +9,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet.Packaging.Core;
-using ZipFilePair = System.Tuple<string, System.IO.Compression.ZipArchiveEntry>;
 
 namespace NuGet.Packaging
 {
     public static class PackageExtractor
     {
-        public static async Task<IEnumerable<string>> ExtractPackageAsync(Stream packageStream, PackageIdentity packageIdentity,
+        public static async Task<IEnumerable<string>> ExtractPackageAsync(
+            Stream packageStream,
+            PackageIdentity packageIdentity,
             PackagePathResolver packagePathResolver,
             PackageExtractionContext packageExtractionContext,
             PackageSaveModes packageSaveMode,
@@ -24,7 +25,7 @@ namespace NuGet.Packaging
             var filesAdded = new List<string>();
             if (packageStream == null)
             {
-                throw new ArgumentNullException("packageStream");
+                throw new ArgumentNullException(nameof(packageStream));
             }
 
             if (!packageStream.CanSeek)
@@ -34,27 +35,23 @@ namespace NuGet.Packaging
 
             if (packageIdentity == null)
             {
-                throw new ArgumentNullException("packageIdentity");
+                throw new ArgumentNullException(nameof(packageIdentity));
             }
 
             if (packagePathResolver == null)
             {
-                throw new ArgumentNullException("packagePathResolver");
+                throw new ArgumentNullException(nameof(packagePathResolver));
             }
 
             // TODO: Need to handle PackageSaveMode
             // TODO: Support overwriting files also?
-            var nupkgStartPosition = packageStream.Position;
             var zipArchive = new ZipArchive(packageStream);
-
-            // default to non-legacy paths
-            var useLegacyPaths = packageExtractionContext == null ? false : packageExtractionContext.UseLegacyPackageInstallPath;
 
             var packageReader = new PackageReader(zipArchive);
             var nuspecReader = new NuspecReader(packageReader.GetNuspec());
-            var packageVersionFromNuspec = nuspecReader.GetVersion();
+            packageIdentity = nuspecReader.GetIdentity();
 
-            var packageDirectoryInfo = Directory.CreateDirectory(packagePathResolver.GetInstallPath(new PackageIdentity(packageIdentity.Id, packageVersionFromNuspec), useLegacyPaths));
+            var packageDirectoryInfo = Directory.CreateDirectory(packagePathResolver.GetInstallPath(packageIdentity));
             var packageDirectory = packageDirectoryInfo.FullName;
 
             filesAdded.AddRange(await PackageHelper.CreatePackageFiles(zipArchive.Entries, packageDirectory, packageSaveMode, token));
@@ -64,8 +61,8 @@ namespace NuGet.Packaging
             {
                 // During package extraction, nupkg is the last file to be created
                 // Since all the packages are already created, the package stream is likely positioned at its end
-                // Reset it to the nupkgStartPosition
-                packageStream.Seek(nupkgStartPosition, SeekOrigin.Begin);
+                // Reset it
+                packageStream.Seek(0, SeekOrigin.Begin);
                 filesAdded.Add(await PackageHelper.CreatePackageFile(nupkgFilePath, packageStream, token));
             }
 
@@ -105,18 +102,12 @@ namespace NuGet.Packaging
 
             // TODO: Need to handle PackageSaveMode
             // TODO: Support overwriting files also?
-            var nupkgStartPosition = packageStream.Position;
             var filesAdded = new List<string>();
 
-            // default to non-legacy paths
-            var useLegacyPaths = packageExtractionContext == null ? false : packageExtractionContext.UseLegacyPackageInstallPath;
-
             var nuspecReader = new NuspecReader(packageReader.GetNuspec());
-            var packageVersionFromNuspec = nuspecReader.GetVersion();
+            packageIdentity = nuspecReader.GetIdentity();
 
-            var packageDirectoryInfo = Directory.CreateDirectory(
-                packagePathResolver.GetInstallPath(
-                    new PackageIdentity(packageIdentity.Id, packageVersionFromNuspec), useLegacyPaths));
+            var packageDirectoryInfo = Directory.CreateDirectory(packagePathResolver.GetInstallPath(packageIdentity));
             var packageDirectory = packageDirectoryInfo.FullName;
 
             foreach (var file in packageReader.GetFiles().Where(file => PackageHelper.IsPackageFile(file, packageSaveMode)))
@@ -127,9 +118,11 @@ namespace NuGet.Packaging
                 Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
 
                 using (var sourceStream = packageReader.GetStream(file))
-                using (var targetStream = new FileStream(targetPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 1024, useAsync: true))
                 {
-                    await sourceStream.CopyToAsync(targetStream);
+                    using (var targetStream = new FileStream(targetPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 1024, useAsync: true))
+                    {
+                        await sourceStream.CopyToAsync(targetStream);
+                    }
                 }
 
                 filesAdded.Add(file);
@@ -140,7 +133,7 @@ namespace NuGet.Packaging
             {
                 // During package extraction, nupkg is the last file to be created
                 // Since all the packages are already created, the package stream is likely positioned at its end
-                // Reset it to the nupkgStartPosition
+                // Reset it
                 if (packageStream.Position != 0)
                 {
                     if (!packageStream.CanSeek)
@@ -171,6 +164,7 @@ namespace NuGet.Packaging
 
             return filesAdded;
         }
+
         public static async Task<IEnumerable<string>> CopySatelliteFilesAsync(PackageIdentity packageIdentity, PackagePathResolver packagePathResolver,
             PackageSaveModes packageSaveMode, CancellationToken token)
         {

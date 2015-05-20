@@ -20,7 +20,6 @@ namespace NuGet.Protocol.VisualStudio
         private readonly UIMetadataResource _metadataResource;
 
         public UISearchResourceV3(RawSearchResourceV3 searchResource, UIMetadataResource metadataResource)
-            : base()
         {
             _searchResource = searchResource;
             _metadataResource = metadataResource;

@@ -237,7 +237,7 @@ namespace NuGet.Versioning
             switch (_floatBehavior)
             {
                 case NuGetVersionFloatBehavior.None:
-                    result = MinVersion.ToNormalizedString();
+                    result = MinVersion.ToString();
                     break;
                 case NuGetVersionFloatBehavior.Prerelease:
                     result = String.Format(new VersionFormatter(), "{0:V}-{1}*", MinVersion, _releasePrefix);

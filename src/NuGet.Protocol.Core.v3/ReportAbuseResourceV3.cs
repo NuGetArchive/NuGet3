@@ -33,7 +33,7 @@ namespace NuGet.Protocol.Core.v3
         public Uri GetReportAbuseUrl(string id, NuGetVersion version)
         {
             //return Utility.ApplyPackageIdVersionToUriTemplate(_reportAbuseTemplates.First(), id, version);
-            return new Uri(String.Format(CultureInfo.InvariantCulture, "https://www.nuget.org/packages/{0}/{1}/ReportAbuse", id, version.ToNormalizedString()));
+            return new Uri(String.Format(CultureInfo.InvariantCulture, "https://www.nuget.org/packages/{0}/{1}/ReportAbuse", id, version.ToString()));
         }
 
         /// <summary>

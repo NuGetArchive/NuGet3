@@ -122,7 +122,7 @@ namespace NuGet.Packaging
 
             if (_minClientVersion != null)
             {
-                var minClientVersionAttribute = new XAttribute(XName.Get("minClientVersion"), _minClientVersion.ToNormalizedString());
+                var minClientVersionAttribute = new XAttribute(XName.Get("minClientVersion"), _minClientVersion.ToString());
                 packages.Add(minClientVersionAttribute);
             }
 

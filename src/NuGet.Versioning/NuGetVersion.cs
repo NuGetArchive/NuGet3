@@ -150,7 +150,6 @@ namespace NuGet.Versioning
         /// <summary>
         /// Returns the version string.
         /// </summary>
-        /// <remarks>This method includes legacy behavior. Use ToNormalizedString() instead.</remarks>
         public override string ToString()
         {
             if (String.IsNullOrEmpty(_originalString))

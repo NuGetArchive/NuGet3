@@ -127,8 +127,7 @@ namespace NuGet.Protocol.Core.v3.DependencyInfo
             var frameworkComparer = new NuGetFrameworkFullComparer();
             var frameworkReducer = new FrameworkReducer();
             var dependencies = await GetDependencies(httpClient, registrationUri, range, token);
-
-            var result = new HashSet<RegistrationInfo>();
+            
             var registrationInfo = new RegistrationInfo();
 
             registrationInfo.IncludePrerelease = range.IncludePrerelease;

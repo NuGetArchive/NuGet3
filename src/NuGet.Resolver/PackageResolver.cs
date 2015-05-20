@@ -136,7 +136,7 @@ namespace NuGet.Resolver
                         // the resolver is able to handle circular dependencies, however we should throw here to keep these from happening
                         throw new NuGetResolverConstraintException(
                             String.Format(CultureInfo.CurrentCulture, Strings.CircularDependencyDetected,
-                            String.Join(" => ", circularReferences.Select(package => $"{package.Id} {package.Version.ToNormalizedString()}"))));
+                            String.Join(" => ", circularReferences.Select(package => $"{package.Id} {package.Version.ToString()}"))));
                     }
 
                     // solution found!

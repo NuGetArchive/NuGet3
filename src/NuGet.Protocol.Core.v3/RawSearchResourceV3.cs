@@ -20,7 +20,6 @@ namespace NuGet.Protocol.Core.v3
         private readonly Uri[] _searchEndpoints;
 
         public RawSearchResourceV3(HttpMessageHandler handler, IEnumerable<Uri> searchEndpoints)
-            : base()
         {
             if (handler == null)
             {

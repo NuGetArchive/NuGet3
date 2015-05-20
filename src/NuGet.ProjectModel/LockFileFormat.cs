@@ -231,7 +231,7 @@ namespace NuGet.ProjectModel
                 json[NativeProperty] = WriteObject(library.NativeLibraries, WriteFileItem);
             }
 
-            return new JProperty(library.Name + "/" + library.Version.ToNormalizedString(), json);
+            return new JProperty(library.Name + "/" + library.Version.ToString(), json);
         }
 
         private ProjectFileDependencyGroup ReadProjectFileDependencyGroup(string property, JToken json)

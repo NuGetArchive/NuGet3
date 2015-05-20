@@ -56,15 +56,13 @@ namespace NuGet.Packaging
 
             var packageId = nuspecReader.GetId();
             packageLanguage = nuspecReader.GetLanguage();
-            string localruntimePackageId = null;
 
             if (!String.IsNullOrEmpty(packageLanguage)
-                &&
-                packageId.EndsWith('.' + packageLanguage, StringComparison.OrdinalIgnoreCase))
+                && packageId.EndsWith('.' + packageLanguage, StringComparison.OrdinalIgnoreCase))
             {
                 // The satellite pack's Id is of the format <Core-Package-Id>.<Language>. Extract the core package id using this.
                 // Additionally satellite packages have a strict dependency on the core package
-                localruntimePackageId = packageId.Substring(0, packageId.Length - packageLanguage.Length - 1);
+                var localruntimePackageId = packageId.Substring(0, packageId.Length - packageLanguage.Length - 1);
 
                 foreach (var group in nuspecReader.GetDependencyGroups())
                 {
@@ -76,7 +74,7 @@ namespace NuGet.Packaging
                             && dependencyPackage.VersionRange.IsMaxInclusive
                             && dependencyPackage.VersionRange.IsMinInclusive)
                         {
-                            var runtimePackageVersion = new NuGetVersion(dependencyPackage.VersionRange.MinVersion.ToNormalizedString());
+                            var runtimePackageVersion = new NuGetVersion(dependencyPackage.VersionRange.MinVersion.ToString());
                             runtimePackageIdentity = new PackageIdentity(dependencyPackage.Id, runtimePackageVersion);
                             return true;
                         }

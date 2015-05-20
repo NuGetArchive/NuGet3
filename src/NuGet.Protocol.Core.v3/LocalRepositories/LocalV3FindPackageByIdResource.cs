@@ -40,7 +40,7 @@ namespace NuGet.Protocol.Core.v3.LocalRepositories
             Stream result = null;
             if (info != null)
             {
-                var packagePath = Path.Combine(info.Path, $"{id}.{version.ToNormalizedString()}.nupkg");
+                var packagePath = Path.Combine(info.Path, $"{id}.{version.ToString()}.nupkg");
                 result = File.OpenRead(packagePath);
             }
 
