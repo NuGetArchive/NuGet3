@@ -54,7 +54,6 @@ namespace NuGet.Protocol.VisualStudio
 
                 return results;
             },token);
-
         }
 
         public override async Task<IEnumerable<UIPackageMetadata>> GetMetadata(string packageId, bool includePrerelease, bool includeUnlisted, CancellationToken token)
