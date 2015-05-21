@@ -53,7 +53,7 @@ namespace NuGet.Protocol.VisualStudio
                 }
 
                 return results;
-            });
+            },token);
         }
 
         public override async Task<IEnumerable<UIPackageMetadata>> GetMetadata(string packageId, bool includePrerelease, bool includeUnlisted, CancellationToken token)
@@ -64,7 +64,7 @@ namespace NuGet.Protocol.VisualStudio
                         .Where(p => includeUnlisted || !p.Published.HasValue || p.Published.Value.Year > 1901)
                         .Where(p => includePrerelease || String.IsNullOrEmpty(p.Version.SpecialVersion))
                         .Select(p => GetVisualStudioUIPackageMetadata(p));
-                });
+                },token);
         }
 
         internal static UIPackageMetadata GetVisualStudioUIPackageMetadata(IPackage package)

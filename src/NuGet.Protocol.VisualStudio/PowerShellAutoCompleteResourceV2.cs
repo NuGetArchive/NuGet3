@@ -101,7 +101,7 @@ namespace NuGet.Protocol.VisualStudio
                 return packages.Select(p => p.Id)
                     .Distinct()
                     .Take(30);
-            });
+            },token);
         }
 
         protected async Task<IEnumerable<NuGetVersion>> GetPackageVersionsFromLocalPackageRepository(IPackageRepository packageRepository, string packageId, string versionPrefix, bool includePrerelease,CancellationToken token)
@@ -119,7 +119,7 @@ namespace NuGet.Protocol.VisualStudio
                 var versions = packages.Select(p => p.Version.ToString()).ToList();
                 versions = versions.Where(item => item.StartsWith(versionPrefix, StringComparison.OrdinalIgnoreCase)).ToList();
                 return versions.Select(item => NuGetVersion.Parse(item));
-            });
+            },token);
         }
 
         private static async Task<IEnumerable<string>> GetResults(Uri apiEndpointUri,CancellationToken token)
@@ -127,6 +127,7 @@ namespace NuGet.Protocol.VisualStudio
             var jsonSerializer = new DataContractJsonSerializer(typeof(string[]));
             System.Net.Http.HttpClient httpClient = new System.Net.Http.HttpClient();
             var httpResponseMessage = await httpClient.GetAsync(apiEndpointUri, token);
+            token.ThrowIfCancellationRequested();
             var stream = await httpResponseMessage.Content.ReadAsStreamAsync();
             return jsonSerializer.ReadObject(stream) as string[];
         }
