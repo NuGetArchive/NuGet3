@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Runtime.Serialization.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,101 +29,106 @@ namespace NuGet.Protocol.VisualStudio
             V2Client = repo;
         }
 
-        public override Task<IEnumerable<string>> IdStartsWith(string packageIdPrefix, bool includePrerelease, CancellationToken token)
+        public override async Task<IEnumerable<string>> IdStartsWith(string packageIdPrefix, bool includePrerelease, CancellationToken token)
         {
             IEnumerable<string> result;
             if (IsLocalSource())
             {
-                result = GetPackageIdsFromLocalPackageRepository(V2Client, packageIdPrefix, true);
+                result = await GetPackageIdsFromLocalPackageRepository(V2Client, packageIdPrefix, true,token);
             }
             else
             {
-                result = GetPackageIdsFromHttpSourceRepository(V2Client, packageIdPrefix, true);
+                result = await GetPackageIdsFromHttpSourceRepository(V2Client, packageIdPrefix, true,token);
             }
 
-            return Task.FromResult(result);
+            return result;
         }
 
-        public override Task<IEnumerable<NuGetVersion>> VersionStartsWith(string packageId, string versionPrefix, bool includePrerelease, CancellationToken token)
+        public override async Task<IEnumerable<NuGetVersion>> VersionStartsWith(string packageId, string versionPrefix, bool includePrerelease, CancellationToken token)
         {
             IEnumerable<NuGetVersion> result;
             if (IsLocalSource())
             {
-                result = GetPackageVersionsFromLocalPackageRepository(V2Client, packageId, versionPrefix, includePrerelease);
+                result = await GetPackageVersionsFromLocalPackageRepository(V2Client, packageId, versionPrefix, includePrerelease,token);
             }
             else
             {
-                result = GetPackageversionsFromHttpSourceRepository(V2Client, packageId, versionPrefix, includePrerelease);
+                result = await GetPackageversionsFromHttpSourceRepository(V2Client, packageId, versionPrefix, includePrerelease,token);
             }
 
-            return Task.FromResult(result);
+            return result;
         }
 
-        private static IEnumerable<string> GetPackageIdsFromHttpSourceRepository(IPackageRepository packageRepository, string searchFilter, bool includePrerelease)
+        private static async Task<IEnumerable<string>> GetPackageIdsFromHttpSourceRepository(IPackageRepository packageRepository, string searchFilter, bool includePrerelease,CancellationToken token)
         {
             var packageSourceUri = new Uri(string.Format(CultureInfo.InvariantCulture, "{0}/", packageRepository.Source.TrimEnd('/')));
             var apiEndpointUri = new UriBuilder(new Uri(packageSourceUri, @"package-ids"))
                 {
                     Query = "partialId=" + searchFilter + "&" + "includePrerelease=" + includePrerelease.ToString()
                 };
-            return GetResults(apiEndpointUri.Uri);
+            return await GetResults(apiEndpointUri.Uri,token);
         }
 
-        private static IEnumerable<NuGetVersion> GetPackageversionsFromHttpSourceRepository(IPackageRepository packageRepository, string packageId, string versionPrefix, bool includePrerelease)
+        private static async Task<IEnumerable<NuGetVersion>> GetPackageversionsFromHttpSourceRepository(IPackageRepository packageRepository, string packageId, string versionPrefix, bool includePrerelease,CancellationToken token)
         {
             var packageSourceUri = new Uri(string.Format(CultureInfo.InvariantCulture, "{0}/", packageRepository.Source.TrimEnd('/')));
             var apiEndpointUri = new UriBuilder(new Uri(packageSourceUri, @"package-versions/" + packageId))
                 {
                     Query = "includePrerelease=" + includePrerelease.ToString()
                 };
-            var versions = GetResults(apiEndpointUri.Uri).ToList();
+            var versions = (await GetResults(apiEndpointUri.Uri,token)).ToList();
             versions = versions.Where(item => item.StartsWith(versionPrefix, StringComparison.OrdinalIgnoreCase)).ToList();
             return versions.Select(item => NuGetVersion.Parse(item));
         }
 
-        private static IEnumerable<string> GetPackageIdsFromLocalPackageRepository(IPackageRepository packageRepository, string searchFilter, bool includePrerelease)
+        private static async Task<IEnumerable<string>> GetPackageIdsFromLocalPackageRepository(IPackageRepository packageRepository, string searchFilter, bool includePrerelease,CancellationToken token)
         {
-            IEnumerable<IPackage> packages = packageRepository.GetPackages();
-
-            if (!String.IsNullOrEmpty(searchFilter))
+            return await Task.Run(() =>
             {
-                packages = packages.Where(p => p.Id.StartsWith(searchFilter, StringComparison.OrdinalIgnoreCase));
-            }
+                IEnumerable<IPackage> packages = packageRepository.GetPackages();
+                token.ThrowIfCancellationRequested();
 
-            if (!includePrerelease)
-            {
-                packages = packages.Where(p => p.IsReleaseVersion());
-            }
+                if (!String.IsNullOrEmpty(searchFilter))
+                {
+                    packages = packages.Where(p => p.Id.StartsWith(searchFilter, StringComparison.OrdinalIgnoreCase));
+                }
 
-            return packages.Select(p => p.Id)
-                .Distinct()
-                .Take(30);
+                if (!includePrerelease)
+                {
+                    packages = packages.Where(p => p.IsReleaseVersion());
+                }
+
+                return packages.Select(p => p.Id)
+                    .Distinct()
+                    .Take(30);
+            });
         }
 
-        protected IEnumerable<NuGetVersion> GetPackageVersionsFromLocalPackageRepository(IPackageRepository packageRepository, string packageId, string versionPrefix, bool includePrerelease)
+        protected async Task<IEnumerable<NuGetVersion>> GetPackageVersionsFromLocalPackageRepository(IPackageRepository packageRepository, string packageId, string versionPrefix, bool includePrerelease,CancellationToken token)
         {
-            var packages = packageRepository.GetPackages().Where(p => p.Id.Equals(packageId, StringComparison.OrdinalIgnoreCase));
-
-            if (!includePrerelease)
+            return await Task.Run(() =>
             {
-                packages = packages.Where(p => p.IsReleaseVersion());
-            }
+                var packages = packageRepository.GetPackages().Where(p => p.Id.Equals(packageId, StringComparison.OrdinalIgnoreCase));
+                token.ThrowIfCancellationRequested();
 
-            var versions = packages.Select(p => p.Version.ToString()).ToList();
-            versions = versions.Where(item => item.StartsWith(versionPrefix, StringComparison.OrdinalIgnoreCase)).ToList();
-            return versions.Select(item => NuGetVersion.Parse(item));
+                if (!includePrerelease)
+                {
+                    packages = packages.Where(p => p.IsReleaseVersion());
+                }
+
+                var versions = packages.Select(p => p.Version.ToString()).ToList();
+                versions = versions.Where(item => item.StartsWith(versionPrefix, StringComparison.OrdinalIgnoreCase)).ToList();
+                return versions.Select(item => NuGetVersion.Parse(item));
+            });
         }
 
-        private static IEnumerable<string> GetResults(Uri apiEndpointUri)
+        private static async Task<IEnumerable<string>> GetResults(Uri apiEndpointUri,CancellationToken token)
         {
             var jsonSerializer = new DataContractJsonSerializer(typeof(string[]));
-            var httpClient = new HttpClient(apiEndpointUri);
-            using (var stream = new MemoryStream())
-            {
-                httpClient.DownloadData(stream);
-                stream.Seek(0, SeekOrigin.Begin);
-                return jsonSerializer.ReadObject(stream) as string[];
-            }
+            System.Net.Http.HttpClient httpClient = new System.Net.Http.HttpClient();
+            var httpResponseMessage = await httpClient.GetAsync(apiEndpointUri, token);
+            var stream = await httpResponseMessage.Content.ReadAsStreamAsync();
+            return jsonSerializer.ReadObject(stream) as string[];
         }
 
         private bool IsLocalSource()

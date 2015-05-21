@@ -21,36 +21,39 @@ namespace NuGet.Protocol.VisualStudio
             V2Client = resource.V2Client;
         }
 
-        public override Task<IEnumerable<UIPackageMetadata>> GetMetadata(IEnumerable<PackageIdentity> packages, CancellationToken token)
+        public override async Task<IEnumerable<UIPackageMetadata>> GetMetadata(IEnumerable<PackageIdentity> packages, CancellationToken token)
         {
-            var results = new List<UIPackageMetadata>();
-
-            foreach (var group in packages.GroupBy(e => e.Id, StringComparer.OrdinalIgnoreCase))
+            return await Task.Run(() =>
             {
-                if (group.Count() == 1)
+                var results = new List<UIPackageMetadata>();
+
+                foreach (var group in packages.GroupBy(e => e.Id, StringComparer.OrdinalIgnoreCase))
                 {
-                    // optimization for a single package
-                    var package = group.Single();
-
-                    var result = V2Client.FindPackage(package.Id, SemanticVersion.Parse(package.Version.ToString()));
-
-                    if (result != null)
+                    if (group.Count() == 1)
                     {
-                        results.Add(GetVisualStudioUIPackageMetadata(result));
+                        // optimization for a single package
+                        var package = group.Single();
+                        var result = V2Client.FindPackage(package.Id, SemanticVersion.Parse(package.Version.ToString()));
+                        token.ThrowIfCancellationRequested();
+                        if (result != null)
+                        {
+                            results.Add(GetVisualStudioUIPackageMetadata(result));
+                        }
+                    }
+                    else
+                    {
+                        // batch mode
+                        var foundPackages = V2Client.FindPackagesById(group.Key)
+                            .Where(p => group.Any(e => VersionComparer.VersionRelease.Equals(e.Version, NuGetVersion.Parse(p.Version.ToString()))));
+                        token.ThrowIfCancellationRequested();
+                        var metadataPackages = foundPackages
+                            .Select(p => GetVisualStudioUIPackageMetadata(p));
+                        results.AddRange(metadataPackages);
                     }
                 }
-                else
-                {
-                    // batch mode
-                    var foundPackages = V2Client.FindPackagesById(group.Key)
-                        .Where(p => group.Any(e => VersionComparer.VersionRelease.Equals(e.Version, NuGetVersion.Parse(p.Version.ToString()))))
-                        .Select(p => GetVisualStudioUIPackageMetadata(p));
 
-                    results.AddRange(foundPackages);
-                }
-            }
-
-            return Task.FromResult<IEnumerable<UIPackageMetadata>>(results);
+                return results;
+            });
         }
 
         public override async Task<IEnumerable<UIPackageMetadata>> GetMetadata(string packageId, bool includePrerelease, bool includeUnlisted, CancellationToken token)
