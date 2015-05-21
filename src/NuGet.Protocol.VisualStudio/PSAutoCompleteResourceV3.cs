@@ -45,7 +45,7 @@ namespace NuGet.Protocol.VisualStudio
             queryUrl.Query = queryString;
 
             var queryUri = queryUrl.Uri;
-            var results = await _client.GetJObjectAsync(queryUri);
+            var results = await _client.GetJObjectAsync(queryUri,token);
             token.ThrowIfCancellationRequested();
             if (results == null)
             {
