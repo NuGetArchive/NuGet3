@@ -10,6 +10,7 @@ using NuGet.Protocol.Core.Types;
 using Test.Utility;
 using Xunit;
 
+
 namespace NuGet.Protocol.VisualStudio.Tests
 {
     //Tests the Powershell autocomplete resource for V2 and v3 sources.  
@@ -23,13 +24,14 @@ namespace NuGet.Protocol.VisualStudio.Tests
             ResponsesDict.Add("https://api-v3search-0.nuget.org/autocomplete?q=elm", JsonData.PsAutoCompleteV3Example);
             ResponsesDict.Add("https://nuget.org/api/v2/package-ids?partialId=elm", JsonData.PSAutoCompleteV2Example);
          }
- 
+
         [Theory]
-        [InlineData("https://nuget.org/api/v2/","v2source")]
-        [InlineData("https://api.nuget.org/v3/index.json", "v3source")]
+        [InlineData("http://testsource.com/v3/index.json", "v3Source")]
+        [InlineData("https://nuget.org/api/v2/", "v2source")]
         public async Task PowershellAutoComplete_IdStartsWith(string sourceUrl,string sourceName)
-        {
-            var source =  new SourceRepository(new Configuration.PackageSource(sourceUrl,sourceName), Repository.Provider.GetVisualStudio());            
+        { 
+            var source = StaticHttpHandler.CreateSource(sourceUrl, Repository.Provider.GetVisualStudio(), ResponsesDict);
+            //var source =  new SourceRepository(new Configuration.PackageSource(sourceUrl,sourceName), Repository.Provider.GetVisualStudio());            
             var resource = await source.GetResourceAsync<PSAutoCompleteResource>();
             Assert.NotNull(resource);
             CancellationTokenSource cancellationToken = new CancellationTokenSource();
@@ -39,11 +41,11 @@ namespace NuGet.Protocol.VisualStudio.Tests
         }
 
         [Theory]
+        [InlineData("http://testsource.com/v3/index.json", "v3Source")]
         [InlineData("https://nuget.org/api/v2/", "v2source")]
-        [InlineData("https://api.nuget.org/v3/index.json", "v3source")]
         public async Task PowershellAutoComplete_Cancel(string sourceUrl, string sourceName)
-        {  
-            var source = new SourceRepository(new Configuration.PackageSource(sourceUrl,sourceName), Repository.Provider.GetVisualStudio());
+        {
+            var source = StaticHttpHandler.CreateSource(sourceUrl, Repository.Provider.GetVisualStudio(), ResponsesDict);
             var resource = await source.GetResourceAsync<PSAutoCompleteResource>();
             Assert.NotNull(resource);
             CancellationTokenSource cancellationToken = new CancellationTokenSource();
