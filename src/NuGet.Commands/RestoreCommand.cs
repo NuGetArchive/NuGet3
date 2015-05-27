@@ -50,7 +50,24 @@ namespace NuGet.Commands
 
             _log.LogInformation($"Restoring packages for '{request.Project.FilePath}'");
 
-            _log.LogWarning("TODO: Read and use lock file");
+            var lockFile = await ReadLockFile(request.LockFilePath);
+            var useLockFile = request.Lock != LockBehavior.Unchanged && lockFile != null && lockFile.IsLocked;
+
+            // Test the state of the lockfile
+            if (useLockFile)
+            {
+                if (!lockFile.IsValidForPackageSpec(request.Project))
+                {
+                    // Exhibit the same behavior as if it has been run with "dnu restore --lock"
+                    _log.LogInformation("Lock file is out of date, updating and relocking.");
+                    useLockFile = false;
+                    request.Lock = LockBehavior.Lock;
+                }
+                else
+                {
+                    _log.LogInformation("Using lock file to restrict package restore.");
+                }
+            }
 
             // Load repositories
             var projectResolver = new PackageSpecResolver(request.Project);
@@ -76,6 +93,13 @@ namespace NuGet.Commands
                 context.ProjectLibraryProviders.Add(
                     new LocalDependencyProvider(
                         new ExternalProjectReferenceDependencyProvider(request.ExternalProjects)));
+            }
+
+            if (useLockFile)
+            {
+                context.LocalLibraryProviders.Add(
+                    new LocalDependencyProvider(
+                        new LockFileDependencyProvider(lockFile)));
             }
 
             context.LocalLibraryProviders.Add(
@@ -151,7 +175,7 @@ namespace NuGet.Commands
 
             // Build the lock file
             var repository = new NuGetv3LocalRepository(request.PackagesDirectory, checkPackageIdCase: false);
-            var lockFile = CreateLockFile(request.Project, graphs, repository);
+            lockFile = CreateLockFile(request.Project, graphs, repository);
             var lockFileFormat = new LockFileFormat();
             lockFileFormat.Write(projectLockFilePath, lockFile);
 
@@ -159,6 +183,16 @@ namespace NuGet.Commands
             WriteTargetsAndProps(request.Project, graphs, repository);
 
             return new RestoreResult(true, graphs, lockFile);
+        }
+
+        private Task<LockFile> ReadLockFile(string lockFilePath)
+        {
+            if (!File.Exists(lockFilePath))
+            {
+                return Task.FromResult(default(LockFile));
+            }
+            var lockFileFormat = new LockFileFormat();
+            return Task.FromResult(lockFileFormat.Read(lockFilePath));
         }
 
         private void WriteTargetsAndProps(PackageSpec project, List<RestoreTargetGraph> targetGraphs, NuGetv3LocalRepository repository)
@@ -505,19 +539,37 @@ namespace NuGet.Commands
             };
         }
 
-        private Task<RestoreTargetGraph> WalkDependencies(LibraryRange projectRange, NuGetFramework framework, RemoteDependencyWalker walker, RemoteWalkContext context)
+        private Task<RestoreTargetGraph> WalkDependencies(LibraryRange projectRange, NuGetFramework framework, RemoteDependencyWalker walker, RemoteWalkContext context, LockFile lockFile)
         {
-            return WalkDependencies(projectRange, framework, null, RuntimeGraph.Empty, walker, context);
+            return WalkDependencies(projectRange, framework, null, RuntimeGraph.Empty, walker, context, lockFile);
         }
 
-        private async Task<RestoreTargetGraph> WalkDependencies(LibraryRange projectRange, NuGetFramework framework, string runtimeIdentifier, RuntimeGraph runtimeGraph, RemoteDependencyWalker walker, RemoteWalkContext context)
+        private async Task<RestoreTargetGraph> WalkDependencies(LibraryRange projectRange, NuGetFramework framework, string runtimeIdentifier, RuntimeGraph runtimeGraph, RemoteDependencyWalker walker, RemoteWalkContext context, LockFile lockFile)
         {
             _log.LogInformation($"Restoring packages for {framework}");
-            var graph = await walker.WalkAsync(
-                projectRange,
-                framework,
-                runtimeIdentifier,
-                runtimeGraph);
+            GraphNode<RemoteResolveResult> graph;
+            if (lockFile != null)
+            {
+                // Get the lock file target
+                var target = lockFile.GetTargetOrDefault(framework, runtimeIdentifier);
+                if(target == null)
+                {
+                    string runtimeStr = string.IsNullOrEmpty(runtimeIdentifier) ? string.Empty : $" ({runtimeIdentifier})";
+                    _log.LogError($"Lock file does not contain a target for {framework}{runtimeStr}");
+                    return null;
+                }
+
+                // Walk all the libraries in the lock file
+                var tasks = new List()
+            }
+            else
+            {
+                graph = await walker.WalkAsync(
+                    projectRange,
+                    framework,
+                    runtimeIdentifier,
+                    runtimeGraph);
+            }
 
             // Resolve conflicts
             _log.LogVerbose($"Resolving Conflicts for {framework}");

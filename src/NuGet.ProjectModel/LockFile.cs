@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using NuGet.Frameworks;
 using NuGet.LibraryModel;
 
 namespace NuGet.ProjectModel
@@ -97,6 +98,13 @@ namespace NuGet.ProjectModel
             }
 
             return sb.ToString();
+        }
+
+        public LockFileTarget GetTargetOrDefault(NuGetFramework framework, string runtimeIdentifier)
+        {
+            return Targets.FirstOrDefault(t =>
+                t.TargetFramework.Equals(framework) &&
+                string.Equals(t.RuntimeIdentifier ?? string.Empty, runtimeIdentifier ?? string.Empty));
         }
     }
 }
