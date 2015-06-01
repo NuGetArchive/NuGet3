@@ -18,6 +18,7 @@ namespace NuGet.Frameworks
         private readonly Version _frameworkVersion;
         private readonly string _frameworkProfile;
         private const string _portable = "portable";
+        private readonly string _originalString;
 
         public NuGetFramework(string framework)
             : this(framework, FrameworkConstants.EmptyVersion)
@@ -30,6 +31,12 @@ namespace NuGet.Frameworks
         }
 
         public NuGetFramework(string frameworkIdentifier, Version frameworkVersion, string frameworkProfile)
+            : this(frameworkIdentifier, frameworkVersion, frameworkProfile, originalString: null)
+        {
+
+        }
+
+        public NuGetFramework(string frameworkIdentifier, Version frameworkVersion, string frameworkProfile, string originalString)
         {
             if (frameworkIdentifier == null)
             {
@@ -44,6 +51,7 @@ namespace NuGet.Frameworks
             _frameworkIdentifier = frameworkIdentifier;
             _frameworkVersion = NormalizeVersion(frameworkVersion);
             _frameworkProfile = frameworkProfile ?? string.Empty;
+            _originalString = originalString;
         }
 
         /// <summary>
@@ -79,6 +87,17 @@ namespace NuGet.Frameworks
         }
 
         /// <summary>
+        /// Original string value used to create this framework.
+        /// </summary>
+        public string OriginalString
+        {
+            get
+            {
+                return _originalString;
+            }
+        }
+
+        /// <summary>
         /// Similar in format to the .NET FrameworkName type
         /// </summary>
         /// <remarks>FrameworkName does not exist in Portable, otherwise this method would return it.</remarks>
@@ -91,14 +110,6 @@ namespace NuGet.Frameworks
                 if (IsSpecificFramework)
                 {
                     var parts = new List<string>(3) { Framework };
-
-                    // Core50 should be written as .NETPortable,Version=v5.0
-                    if (string.Equals(FrameworkConstants.FrameworkIdentifiers.CoreCLR, Framework, StringComparison.OrdinalIgnoreCase) 
-                        && String.IsNullOrEmpty(Profile)
-                        && Version >= FrameworkConstants.Version5)
-                    {
-                        parts = new List<string>(3) { FrameworkConstants.FrameworkIdentifiers.Portable };
-                    }
 
                     parts.Add(String.Format(CultureInfo.InvariantCulture, "Version=v{0}", GetDisplayVersion(Version)));
 
@@ -134,7 +145,13 @@ namespace NuGet.Frameworks
         {
             var sb = new StringBuilder();
 
-            if (IsSpecificFramework)
+            if (IsPCL50)
+            {
+                // netportable50 is a special case to denote Core CLR
+                sb.Append("netportable");
+                sb.Append(mappings.GetVersionString(Version));
+            }
+            else if (IsSpecificFramework)
             {
                 var shortFramework = string.Empty;
 
@@ -172,15 +189,8 @@ namespace NuGet.Frameworks
                         // Normalize by removing all optional frameworks
                         mappings.TryGetPortableFrameworks(Profile, false, out frameworks);
 
-                        // TODO: is there a scenario where optional frameworks are still needed in the string?
-                        // mappings.TryGetPortableFrameworks(Profile, true, out frameworks);
-                        // HashSet<NuGetFramework> optional = new HashSet<NuGetFramework>(frameworks.Where(e => !required.Contains(e)), NuGetFramework.Comparer);
-
                         // sort the PCL frameworks by alphabetical order
                         var sortedFrameworks = required.Select(e => e.GetShortFolderName(mappings)).OrderBy(e => e, StringComparer.OrdinalIgnoreCase).ToList();
-
-                        // add optional frameworks at the end
-                        // sortedFrameworks.AddRange(optional.Select(e => e.GetShortFolderName(mappings)).OrderBy(e => e, StringComparer.OrdinalIgnoreCase));
 
                         sb.Append(String.Join("+", sortedFrameworks));
                     }
@@ -255,6 +265,14 @@ namespace NuGet.Frameworks
         public bool IsPCL
         {
             get { return StringComparer.OrdinalIgnoreCase.Equals(Framework, FrameworkConstants.FrameworkIdentifiers.Portable) && Version.Major < 5; }
+        }
+
+        /// <summary>
+        /// Portable class library check for netportable50 or higher.
+        /// </summary>
+        public bool IsPCL50
+        {
+            get { return StringComparer.OrdinalIgnoreCase.Equals(Framework, FrameworkConstants.FrameworkIdentifiers.Portable) && Version.Major >= 5; }
         }
 
         /// <summary>

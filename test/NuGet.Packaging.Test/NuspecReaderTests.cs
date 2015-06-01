@@ -255,7 +255,7 @@ namespace NuGet.Packaging.Test
             // unsupported frameworks remain ungrouped
             Assert.Equal(5, dependencies.Count);
 
-            Assert.Equal(4, dependencies.Where(g => g.TargetFramework == NuGetFramework.UnsupportedFramework).Count());
+            Assert.Equal(4, dependencies.Where(g => g.TargetFramework.IsUnsupported).Count());
         }
 
         private static NuspecReader GetReader(string nuspec)

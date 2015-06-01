@@ -105,18 +105,7 @@ namespace NuGet.Frameworks
                     profile = profilePart.Split('=')[1];
                 }
 
-                // .NETPortable v5.0 is Core50, any portable framework with a version >= 5 and no 
-                // profile should be treated as Core
-                if (String.IsNullOrEmpty(profile) 
-                    && version >= FrameworkConstants.Version5
-                    && string.Equals(platform, FrameworkConstants.FrameworkIdentifiers.Portable, StringComparison.OrdinalIgnoreCase))
-                {
-                    result = new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.CoreCLR, version);
-                }
-                else
-                {
-                    result = new NuGetFramework(platform, version, profile);
-                }
+                result = new NuGetFramework(platform, version, profile, frameworkName);
             }
 
             return result;
@@ -179,35 +168,26 @@ namespace NuGet.Frameworks
                                 profile = profileShort ?? string.Empty;
                             }
 
-                            if (string.Equals(FrameworkConstants.FrameworkIdentifiers.Portable, framework, StringComparison.OrdinalIgnoreCase))
+                            if (version.Major < 5 && string.Equals(FrameworkConstants.FrameworkIdentifiers.Portable, framework, StringComparison.OrdinalIgnoreCase))
                             {
-                                // .NETPortable v5.0 is Core50, any portable framework with a version >= 5 and no 
-                                // profile should be treated as Core
-                                if (String.IsNullOrEmpty(profile) && version >= FrameworkConstants.Version5)
+                                // Portable with framework profiles
+                                IEnumerable<NuGetFramework> clientFrameworks = null;
+                                mappings.TryGetPortableFrameworks(profileShort, out clientFrameworks);
+
+                                var profileNumber = -1;
+                                if (mappings.TryGetPortableProfile(clientFrameworks, out profileNumber))
                                 {
-                                    result = new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.CoreCLR, version);
+                                    var portableProfileNumber = FrameworkNameHelpers.GetPortableProfileNumberString(profileNumber);
+                                    result = new NuGetFramework(framework, version, portableProfileNumber, folderName);
                                 }
                                 else
                                 {
-                                    // Portable with framework profiles
-                                    IEnumerable<NuGetFramework> clientFrameworks = null;
-                                    mappings.TryGetPortableFrameworks(profileShort, out clientFrameworks);
-
-                                    var profileNumber = -1;
-                                    if (mappings.TryGetPortableProfile(clientFrameworks, out profileNumber))
-                                    {
-                                        var portableProfileNumber = FrameworkNameHelpers.GetPortableProfileNumberString(profileNumber);
-                                        result = new NuGetFramework(framework, version, portableProfileNumber);
-                                    }
-                                    else
-                                    {
-                                        result = new NuGetFramework(framework, version, profileShort);
-                                    }
+                                    result = new NuGetFramework(framework, version, profileShort, folderName);
                                 }
                             }
                             else
                             {
-                                result = new NuGetFramework(framework, version, profile);
+                                result = new NuGetFramework(framework, version, profile, folderName);
                             }
                         }
                     }
@@ -222,6 +202,12 @@ namespace NuGet.Frameworks
                         result = deprecated;
                     }
                 }
+            }
+
+            if (result == UnsupportedFramework)
+            {
+                // Add the original string to the unsupported framework
+                result = new NuGetFramework(UnsupportedFramework.Framework, UnsupportedFramework.Version, UnsupportedFramework.Profile, folderName);
             }
 
             return result;
@@ -387,13 +373,7 @@ namespace NuGet.Frameworks
         {
             framework = null;
 
-            if (StringComparer.OrdinalIgnoreCase.Equals(frameworkString, "core50")
-                || StringComparer.OrdinalIgnoreCase.Equals(frameworkString, "core")
-                || StringComparer.OrdinalIgnoreCase.Equals(frameworkString, "core5"))
-            {
-                framework = FrameworkConstants.CommonFrameworks.Core50;
-            }
-            else if (StringComparer.OrdinalIgnoreCase.Equals(frameworkString, "dnx")
+            if (StringComparer.OrdinalIgnoreCase.Equals(frameworkString, "dnx")
                      || StringComparer.OrdinalIgnoreCase.Equals(frameworkString, "dnx451"))
             {
                 framework = FrameworkConstants.CommonFrameworks.Dnx451;

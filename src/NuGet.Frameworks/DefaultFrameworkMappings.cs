@@ -81,8 +81,7 @@ namespace NuGet.Frameworks
                             new KeyValuePair<string, string>(FrameworkConstants.FrameworkIdentifiers.XamarinXboxOne, "xamarinxboxone"),
                             new KeyValuePair<string, string>(FrameworkConstants.FrameworkIdentifiers.Dnx, "dnx"),
                             new KeyValuePair<string, string>(FrameworkConstants.FrameworkIdentifiers.DnxCore, "dnxcore"),
-                            new KeyValuePair<string, string>(FrameworkConstants.FrameworkIdentifiers.CoreCLR, "core"),
-                            new KeyValuePair<string, string>(FrameworkConstants.FrameworkIdentifiers.NetCore, "netcore"), 
+                            new KeyValuePair<string, string>(FrameworkConstants.FrameworkIdentifiers.NetCore, "netcore"),
                             new KeyValuePair<string, string>(FrameworkConstants.FrameworkIdentifiers.WinRT, "winrt"), // legacy
                             new KeyValuePair<string, string>(FrameworkConstants.FrameworkIdentifiers.UAP, "uap"),
                         };
@@ -199,11 +198,6 @@ namespace NuGet.Frameworks
                                 FrameworkConstants.CommonFrameworks.DnxCore,
                                 FrameworkConstants.CommonFrameworks.DnxCore50),
 
-                            // core <-> core50
-                            new KeyValuePair<NuGetFramework, NuGetFramework>(
-                                FrameworkConstants.CommonFrameworks.Core,
-                                FrameworkConstants.CommonFrameworks.Core50),
-
                             // TODO: remove these rules post-RC
                             // aspnet <-> aspnet50
                             new KeyValuePair<NuGetFramework, NuGetFramework>(
@@ -265,9 +259,6 @@ namespace NuGet.Frameworks
                         {
                             // .NET is a subset of DNX
                             new KeyValuePair<string, string>(FrameworkConstants.FrameworkIdentifiers.Net, FrameworkConstants.FrameworkIdentifiers.Dnx),
-
-                            // CoreCLR is a subset of DNXCore
-                            new KeyValuePair<string, string>(FrameworkConstants.FrameworkIdentifiers.CoreCLR, FrameworkConstants.FrameworkIdentifiers.DnxCore),
                         };
                 }
 
@@ -309,21 +300,29 @@ namespace NuGet.Frameworks
                                     new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.NetCore, FrameworkConstants.Version5),
                                     new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.NetCore, FrameworkConstants.Version5))),
 
-                            // NetCore50 supports Core50
+                            // NetCore50 supports netportable50
                             new OneWayCompatibilityMappingEntry(new FrameworkRange(
-                                new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.NetCore, new Version(5, 0, 0, 0)),
+                                new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.NetCore, FrameworkConstants.Version5),
                                 new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.NetCore, FrameworkConstants.MaxVersion)),
                                 new FrameworkRange(
-                                    new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.CoreCLR, FrameworkConstants.Version5),
-                                    new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.CoreCLR, FrameworkConstants.Version5))),
+                                    FrameworkConstants.CommonFrameworks.NetPortable50,
+                                    FrameworkConstants.CommonFrameworks.NetPortable50)),
 
-                            // Net46 supports Core50
+                            // DNXCore50 supports netportable50
+                            new OneWayCompatibilityMappingEntry(new FrameworkRange(
+                                FrameworkConstants.CommonFrameworks.DnxCore50,
+                                new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.DnxCore, FrameworkConstants.MaxVersion)),
+                                new FrameworkRange(
+                                    FrameworkConstants.CommonFrameworks.NetPortable50,
+                                    new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.Portable, FrameworkConstants.MaxVersion))),
+
+                            // Net46 supports netportable50
                             new OneWayCompatibilityMappingEntry(new FrameworkRange(
                                 new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.Net, new Version(4, 6, 0, 0)),
                                 new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.Net, FrameworkConstants.MaxVersion)),
                                 new FrameworkRange(
-                                    new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.CoreCLR, FrameworkConstants.Version5),
-                                    new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.CoreCLR, FrameworkConstants.Version5))),
+                                    FrameworkConstants.CommonFrameworks.NetPortable50,
+                                    FrameworkConstants.CommonFrameworks.NetPortable50)),
 
                             // Win projects support WinRT
                             new OneWayCompatibilityMappingEntry(new FrameworkRange(

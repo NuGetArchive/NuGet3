@@ -48,9 +48,9 @@ namespace NuGet.Frameworks
             NuGetFramework nearest = null;
 
             // Unsupported frameworks always lose, throw them out unless it's all we were given
-            if (possibleFrameworks.Any(e => e != NuGetFramework.UnsupportedFramework))
+            if (possibleFrameworks.Any(e => !e.IsUnsupported))
             {
-                possibleFrameworks = possibleFrameworks.Where(e => e != NuGetFramework.UnsupportedFramework);
+                possibleFrameworks = possibleFrameworks.Where(e => !e.IsUnsupported);
             }
 
             // Try exact matches first

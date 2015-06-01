@@ -62,6 +62,16 @@ namespace NuGet.Frameworks
                 return true;
             }
 
+            // for unsupported frameworks, check if the original strings match
+            if (target.OriginalString != null
+                && candidate.OriginalString != null
+                && target.IsUnsupported
+                && candidate.IsUnsupported
+                && string.Equals(target.OriginalString, candidate.OriginalString, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
             // special cased frameworks
             if (!target.IsSpecificFramework
                 || !candidate.IsSpecificFramework)
@@ -116,7 +126,6 @@ namespace NuGet.Frameworks
 
         private bool? IsPCLCompatible(NuGetFramework target, NuGetFramework candidate)
         {
-            // TODO: PCLs can only depend on other PCLs?
             if (target.IsPCL
                 && !candidate.IsPCL)
             {

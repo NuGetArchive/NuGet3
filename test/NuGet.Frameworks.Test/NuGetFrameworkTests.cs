@@ -11,6 +11,7 @@ namespace NuGet.Test
     public class NuGetFrameworkTests
     {
         [Theory]
+        [InlineData("netportable50", "netportable5")]
         [InlineData("net45", "net45")]
         [InlineData("portable-net45+win8+monoandroid", "portable-net45+win8")]
         [InlineData("portable-net45+win8+xamarin.ios", "portable-net45+win8")]
@@ -37,6 +38,7 @@ namespace NuGet.Test
         }
 
         [Theory]
+        [InlineData("netportable5", "netportable50")]
         [InlineData("net45", "net45")]
         [InlineData("portable-net45+win8", "portable-net45+win8+monoandroid+monotouch")]
         [InlineData("portable-net45+win8", "portable-net45+win8+monoandroid+monotouch+xamarin.ios")]
@@ -63,6 +65,7 @@ namespace NuGet.Test
         }
 
         [Theory]
+        [InlineData("netportable5", "netportable500")]
         [InlineData("net45", "net450")]
         [InlineData("net45", "net4.5.0")]
         [InlineData("aspnetcore5", "aspnetcore500")]

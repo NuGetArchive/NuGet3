@@ -46,6 +46,35 @@ namespace NuGet.Test
             Assert.Equal(expectedFramework, result.GetShortFolderName());
         }
 
+        [Theory]
+        [InlineData("netportable50")]
+        public void FrameworkReducer_JsonNetGetNearestLibGroupNotFound(string projectFramework)
+        {
+            // Arrange
+
+            // Get nearest lib group for newtonsoft.json 7.0.1-beta2
+            FrameworkReducer reducer = new FrameworkReducer();
+
+            var project = NuGetFramework.Parse(projectFramework);
+
+            List<NuGetFramework> frameworks = new List<NuGetFramework>()
+            {
+                NuGetFramework.Parse("net20"),
+                NuGetFramework.Parse("net35"),
+                NuGetFramework.Parse("net40"),
+                NuGetFramework.Parse("net45"),
+                NuGetFramework.Parse("portable-net40+wp80+win8+wpa81+sl5"),
+                NuGetFramework.Parse("portable-net45+wp80+win8+wpa81+aspnetcore50")
+            };
+
+            // Act
+            var result = reducer.GetNearest(project, frameworks);
+
+            // Assert
+            Assert.Null(result);
+        }
+
+
         [Fact]
         public void FrameworkReducer_GetNearestUAPTie()
         {
@@ -114,16 +143,16 @@ namespace NuGet.Test
             var project = NuGetFramework.Parse("UAP10.0");
 
             var native = NuGetFramework.Parse("native");
-            var core50 = NuGetFramework.Parse("core50");
+            var netportable50 = NuGetFramework.Parse("netportable50");
             var dnx451 = NuGetFramework.Parse("dnx451");
             var dnxcore50 = NuGetFramework.Parse("dnxcore50");
             var net45 = NuGetFramework.Parse("net45");
 
-            var all = new NuGetFramework[] { native, core50, dnx451, dnxcore50, net45 };
+            var all = new NuGetFramework[] { native, netportable50, dnx451, dnxcore50, net45 };
 
             var result = reducer.GetNearest(project, all);
 
-            Assert.Equal(core50, result);
+            Assert.Equal(netportable50, result);
         }
 
         [Fact]
@@ -133,16 +162,16 @@ namespace NuGet.Test
 
             var project = NuGetFramework.Parse("UAP10.0");
 
-            var core = NuGetFramework.Parse("core50");
+            var netportable = NuGetFramework.Parse("netportable50");
             var dnx451 = NuGetFramework.Parse("dnx451");
             var dnxcore50 = NuGetFramework.Parse("dnxcore50");
             var net45 = NuGetFramework.Parse("net45");
 
-            var all = new NuGetFramework[] { core, dnx451, dnxcore50, net45 };
+            var all = new NuGetFramework[] { netportable, dnx451, dnxcore50, net45 };
 
             var result = reducer.GetNearest(project, all);
 
-            Assert.Equal(core, result);
+            Assert.Equal(netportable, result);
         }
 
         [Fact]
@@ -287,9 +316,9 @@ namespace NuGet.Test
             FrameworkReducer reducer = new FrameworkReducer();
 
             var dnxcore50 = NuGetFramework.Parse("dnxcore50");
-            var core50 = NuGetFramework.Parse("core50");
+            var netportable50 = NuGetFramework.Parse("netportable50");
 
-            var all = new NuGetFramework[] { dnxcore50, core50 };
+            var all = new NuGetFramework[] { dnxcore50, netportable50 };
 
             var result = reducer.GetNearest(NuGetFramework.AnyFramework, all);
 

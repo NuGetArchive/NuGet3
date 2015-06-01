@@ -1,7 +1,6 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using NuGet.Frameworks;
 using Xunit;
 
@@ -22,9 +21,9 @@ namespace NuGet.Test
 
         [Theory]
         [InlineData("dnxcore50", "UAP10.0")]
-        [InlineData("core50", "UAP10.0")]
-        [InlineData("core", "UAP10.0")]
-        [InlineData("core50", "UAP")]
+        [InlineData("netportable50", "UAP10.0")]
+        [InlineData("netportable", "UAP10.0")]
+        [InlineData("netportable50", "UAP")]
         [InlineData("native", "UAP")]
         [InlineData("net46", "UAP")]
         public void Compatibility_PlatformOneWayNeg(string fw1, string fw2)
@@ -41,8 +40,7 @@ namespace NuGet.Test
         [InlineData("UAP10.0", "netcore50")]
         [InlineData("UAP10.0", "netcore45")]
         [InlineData("UAP10.0", "winrt45")]
-        [InlineData("UAP10.0", "Core50")]
-        [InlineData("UAP10.0", "Core")]
+        [InlineData("UAP10.0", "netportable50")]
         [InlineData("UAP10.0", "Win81")]
         [InlineData("UAP10.0", "Win8")]
         [InlineData("UAP10.0", "Win")]
@@ -76,17 +74,16 @@ namespace NuGet.Test
         [InlineData("dnx46", "dnx451")]
         [InlineData("dnx452", "dnx451")]
         [InlineData("dnx452", "dnx")]
-        [InlineData("dnxcore", "core50")]
-        [InlineData("dnxcore", "core")]
-        [InlineData("net46", "core50")]
-        [InlineData("dnx46", "core50")]
+        [InlineData("dnxcore", "netportable50")]
+        [InlineData("dnxcore", "netportable60")]
+        [InlineData("net46", "netportable50")]
+        [InlineData("dnx46", "netportable50")]
         [InlineData("aspnet50", "net40")]
         [InlineData("netcore50", "netcore45")]
-        [InlineData("netcore50", "core50")]
+        [InlineData("netcore50", "netportable50")]
         [InlineData("uap10.0", "portable-net45+win8")]
         [InlineData("uap10.0", "portable-net45+win8+wpa81")]
         [InlineData("uap10.0", "portable-net45+wpa81")]
-        [InlineData("uap10.0", "portable-net45+sl5+core50")]
         [InlineData("uap10.0", "portable-net45+sl5+netcore50")]
         [InlineData("uap10.0", "portable-net45+sl5+uap")]
         [InlineData("netcore50", "netcore451")]
@@ -134,15 +131,15 @@ namespace NuGet.Test
         [Theory]
         [InlineData("net45", "dnx451")]
         [InlineData("net45", "net46")]
-        [InlineData("core50", "net4")]
+        [InlineData("netportable50", "net4")]
         [InlineData("win81", "netcore50")]
         [InlineData("wpa81", "netcore50")]
         [InlineData("uap10.0", "portable-net45+sl5+wp8")]
-        [InlineData("netcore451", "core")]
+        [InlineData("netcore451", "netportable")]
         [InlineData("win8", "netcore451")]
-        [InlineData("netcore451", "core50")]
-        [InlineData("win81", "core50")]
-        [InlineData("wpa81", "core50")]
+        [InlineData("netcore451", "netportable50")]
+        [InlineData("win81", "netportable50")]
+        [InlineData("wpa81", "netportable50")]
         public void Compatibility_SimpleNonCompat(string fw1, string fw2)
         {
             var framework1 = NuGetFramework.Parse(fw1);
@@ -212,32 +209,52 @@ namespace NuGet.Test
         }
 
         [Theory]
+        [InlineData("sl2")]
         [InlineData("net45")]
+        [InlineData("net20")]
         [InlineData("netcore45")]
         [InlineData("win8")]
+        [InlineData("win81")]
+        [InlineData("wpa81")]
+        [InlineData("win10.0")]
         [InlineData("native")]
         [InlineData("dnx451")]
+        [InlineData("netportable")]
+        [InlineData("portable")]
+        [InlineData("portable-win8+net40+sl3")]
+        [InlineData("portable-net451+win8+dnxcore50")]
+        [InlineData(".NETPortable,Version=v4.6,Profile=Profile259")]
         public void Compatibility_CoreCompatNeg(string framework)
         {
+            // Arrange
             var framework1 = NuGetFramework.Parse(framework);
-            var framework2 = NuGetFramework.Parse("core50");
+            var framework2 = NuGetFramework.Parse("netportable50");
 
             var compat = DefaultCompatibilityProvider.Instance;
 
+            // Act & Assert
             Assert.False(compat.IsCompatible(framework1, framework2));
+            Assert.False(compat.IsCompatible(framework2, framework1));
         }
 
         [Theory]
+        [InlineData("net50")]
         [InlineData("net46")]
         [InlineData("dnx46")]
         [InlineData("dnxcore50")]
         [InlineData("dnxcore")]
+        [InlineData("netcore50")]
+        [InlineData("netcore6")]
+        [InlineData("UAP10.5")]
         public void Compatibility_CoreCompat(string framework)
         {
+            // Arrange
             var framework1 = NuGetFramework.Parse(framework);
-            var framework2 = NuGetFramework.Parse("core50");
+            var framework2 = NuGetFramework.Parse("netportable50");
 
             var compat = DefaultCompatibilityProvider.Instance;
+
+            // Act & Assert
 
             // verify that compatibility is inferred across all the mappings
             Assert.True(compat.IsCompatible(framework1, framework2));
@@ -249,9 +266,9 @@ namespace NuGet.Test
         [Fact]
         public void Compatibility_InferredCore()
         {
-            // dnxcore50 -> coreclr -> native
+            // dnxcore50 -> netportable50
             var framework1 = NuGetFramework.Parse("dnxcore50");
-            var framework2 = NuGetFramework.Parse("core50");
+            var framework2 = NuGetFramework.Parse("netportable50");
 
             var compat = DefaultCompatibilityProvider.Instance;
 
@@ -499,6 +516,21 @@ namespace NuGet.Test
             // Assert
             Assert.False(net40CompatibleWithNet20);
             Assert.True(net20CompatibleWithNet40);
+        }
+
+        [Theory]
+        [InlineData("madeup1", "mAdeup1")]
+        [InlineData("framework", "framework")]
+        public void CompareUnsupportedFrameworksOnOriginalString(string framework1, string framework2)
+        {
+            // Arrange
+            var fw1 = NuGetFramework.Parse(framework1);
+            var fw2 = NuGetFramework.Parse(framework2);
+            var compat = DefaultCompatibilityProvider.Instance;
+
+            // Assert & Act
+            Assert.True(compat.IsCompatible(fw1, fw2));
+            Assert.True(compat.IsCompatible(fw2, fw1));
         }
     }
 }
