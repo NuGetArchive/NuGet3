@@ -89,8 +89,14 @@ namespace NuGet.Protocol.Core.v3
                     length = (int)response.ContentLength;
 #endif
 
-                    var downloadResult = await GlobalPackagesFolderUtility.AddPackageAsync(identity, packageStream, settings, this, length);
                     OnProgressAvailable(identity, settings, 1.0);
+
+                    var downloadResult = await GlobalPackagesFolderUtility.AddPackageAsync(identity,
+                        packageStream,
+                        settings,
+                        this, 
+                        length,
+                        token);
 
                     return downloadResult;
                 }
