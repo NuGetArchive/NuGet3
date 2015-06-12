@@ -10,41 +10,35 @@ namespace NuGet.Common
 {
     internal static class ConcurrencyUtilities
     {
-        internal static async Task<T> ExecuteWithFileLocked<T>(string filePath, Func<Task<T>> action)
+        public static Task<TVal> ExecuteWithFileLocked<TVal>(string filePath, TimeSpan timeout, Func<bool, Task<TVal>> action)
         {
-            T result = default(T);
-
-            using (var filelock = new Mutex(initiallyOwned: false, name: FilePathToLockName(filePath)))
+            for (var i = 0; i < 3; ++i)
             {
-                while (true)
+                var createdNew = false;
+                var fileLock = new Semaphore(initialCount: 0, maximumCount: 1, name: FilePathToLockName(filePath),
+                    createdNew: out createdNew);
+                try
                 {
-                    try
+                    // If this lock is already acquired by another process, wait until we can acquire it
+                    if (!createdNew)
                     {
-                        if (filelock.WaitOne(1000))
+                        var signaled = fileLock.WaitOne(timeout);
+                        if (!signaled)
                         {
-                            try
-                            {
-                                result = await action();
-                            }
-                            finally
-                            {
-                                filelock.ReleaseMutex();
-                            }
-
-                            // Job is done. break the loop
-                            break;
+                            // Timeout and retry
+                            continue;
                         }
+                    }
 
-                        // Still the mutex is not released. Loop continues
-                    }
-                    catch (AbandonedMutexException)
-                    {
-                        // Mutex was abandoned. Possibly, because, the process holding the mutex was killed
-                    }
+                    return action(createdNew);
+                }
+                finally
+                {
+                    fileLock.Release();
                 }
             }
 
-            return result;
+            throw new TaskCanceledException($"Failed to acquire semaphore for file: {filePath}");
         }
 
         private static string FilePathToLockName(string filePath)
