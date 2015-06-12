@@ -29,7 +29,7 @@ namespace NuGet.Protocol.Core.Types
 
             if (identity == null)
             {
-                throw new ArgumentNullException("identity");
+                throw new ArgumentNullException(nameof(identity));
             }
 
             _identity = identity;

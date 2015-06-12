@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -76,9 +77,21 @@ namespace NuGet.Protocol.Core.v3
                     return packageFromGlobalPackages;
                 }
 
+                OnProgressAvailable(identity, settings, 0.0);
+
                 using (var packageStream = await _client.GetStreamAsync(uri))
                 {
-                    var downloadResult = await GlobalPackagesFolderUtility.AddPackageAsync(identity, packageStream, settings);
+                    int length = 0;
+#if !DNXCORE50
+                    // Get the length of the content
+                    var request = WebRequest.Create(uri);
+                    var response = request.GetResponse();
+                    length = (int)response.ContentLength;
+#endif
+
+                    var downloadResult = await GlobalPackagesFolderUtility.AddPackageAsync(identity, packageStream, settings, this, length);
+                    OnProgressAvailable(identity, settings, 1.0);
+
                     return downloadResult;
                 }
             }

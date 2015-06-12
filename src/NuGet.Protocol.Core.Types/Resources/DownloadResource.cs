@@ -17,5 +17,23 @@ namespace NuGet.Protocol.Core.Types
         public abstract Task<DownloadResourceResult> GetDownloadResourceResultAsync(PackageIdentity identity, ISettings settings, CancellationToken token);
 
         public event EventHandler<PackageProgressEventArgs> Progress;
+
+        public void OnProgressAvailable(PackageIdentity identity, ISettings settings, double percentage)
+        {
+            string sourceName = string.Empty;
+
+            if (settings != null)
+            {
+                var sourceProvider = new PackageSourceProvider(settings);
+                sourceName = sourceProvider?.ActivePackageSourceName ?? string.Empty;
+            }
+
+            var packageSource = new PackageSource(sourceName);
+
+            if (Progress != null)
+            {
+                Progress(this, new PackageProgressEventArgs(identity, packageSource, percentage));
+            }
+        }
     }
 }

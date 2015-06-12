@@ -55,7 +55,11 @@ namespace NuGet.Protocol.Core.v2
                             }
                         }
 
-                        return new DownloadResourceResult(package.GetStream());
+                        OnProgressAvailable(identity, settings, 0.0);
+                        var stream = package.GetStream();
+                        OnProgressAvailable(identity, settings, 1.0);
+
+                        return new DownloadResourceResult(stream);
                     }
 
                     return null;

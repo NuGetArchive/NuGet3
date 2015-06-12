@@ -16,7 +16,7 @@ namespace NuGet.Packaging
 {
     public static class NuGetPackageUtils
     {
-        private const string ManifestExtension = ".nuspec";
+        public const string ManifestExtension = ".nuspec";
 
         public static async Task InstallFromStreamAsync(
             Stream stream,
@@ -86,7 +86,7 @@ namespace NuGet.Packaging
         }
 
         // DNU REFACTORING TODO: delete this temporary workaround after we have NuSpecFormatter.Read()
-        private static void FixNuSpecIdCasing(string nuspecFile, string targetNuspec, string correctedId)
+        public static void FixNuSpecIdCasing(string nuspecFile, string targetNuspec, string correctedId)
         {
             var actualNuSpecName = Path.GetFileName(nuspecFile);
             var expectedNuSpecName = Path.GetFileName(targetNuspec);
@@ -111,7 +111,7 @@ namespace NuGet.Packaging
             }
         }
 
-        private static void ExtractPackage(string targetPath, FileStream stream)
+        public static void ExtractPackage(string targetPath, FileStream stream)
         {
             using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
             {
