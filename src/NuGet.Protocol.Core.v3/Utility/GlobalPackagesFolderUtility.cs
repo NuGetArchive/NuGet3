@@ -120,7 +120,7 @@ namespace NuGet.Protocol.Core.v3
             CancellationToken token)
         {
 #if DNXCORE50
-            NuGetPackageUtils.InstallFromStreamAsync(stream, packageIdentity, packagesDirectory, log, fixNuspecIdCasing);
+            await NuGetPackageUtils.InstallFromStreamAsync(stream, packageIdentity, packagesDirectory, log, fixNuspecIdCasing, token: token);
 #endif
 
             var packagePathResolver = new DefaultPackagePathResolver(packagesDirectory);
