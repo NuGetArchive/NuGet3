@@ -163,7 +163,7 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
             // The update of a cached file is divided into two steps:
             // 1) Delete the old file. 2) Create a new file with the same name.
             // To prevent race condition among multiple processes, here we use a lock to make the update atomic.
-            await ConcurrencyUtilities.ExecuteWithFileLocked(result.CacheFileName, async () =>
+            await ConcurrencyUtilities.ExecuteWithFileLocked(result.CacheFileName, TimeSpan.FromMinutes(1), async _ =>
                 {
                     using (var stream = new FileStream(
                         newFile,
@@ -238,7 +238,7 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
 
             // Acquire the lock on a file before we open it to prevent this process
             // from opening a file deleted by the logic in HttpSource.GetAsync() in another process
-            return await ConcurrencyUtilities.ExecuteWithFileLocked(cacheFile, () =>
+            return await ConcurrencyUtilities.ExecuteWithFileLocked(cacheFile, TimeSpan.FromMinutes(1), _ =>
                 {
                     if (File.Exists(cacheFile))
                     {

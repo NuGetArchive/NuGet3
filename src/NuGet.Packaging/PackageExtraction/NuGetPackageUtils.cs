@@ -34,7 +34,7 @@ namespace NuGet.Packaging
 
             // Acquire the lock on a nukpg before we extract it to prevent the race condition when multiple
             // processes are extracting to the same destination simultaneously
-            await ConcurrencyUtilities.ExecuteWithFileLocked(targetNupkg, async () =>
+            await ConcurrencyUtilities.ExecuteWithFileLocked<int>(targetNupkg, TimeSpan.FromMinutes(1), async _ =>
                 {
                     // If this is the first process trying to install the target nupkg, go ahead
                     // After this process successfully installs the package, all other processes

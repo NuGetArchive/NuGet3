@@ -166,7 +166,7 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
 
             // Acquire the lock on a file before we open it to prevent this process
             // from opening a file deleted by the logic in HttpSource.GetAsync() in another process
-            return await ConcurrencyUtilities.ExecuteWithFileLocked(result.TempFileName, () =>
+            return await ConcurrencyUtilities.ExecuteWithFileLocked(result.TempFileName, TimeSpan.FromMinutes(1), _ =>
                 {
                     return Task.FromResult(
                         new FileStream(result.TempFileName, FileMode.Open, FileAccess.Read,
