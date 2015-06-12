@@ -34,8 +34,8 @@ namespace NuGet.Protocol.VisualStudio.Tests
             Assert.NotNull(resource);
 
             // Act
-            CancellationTokenSource cancellationToken = new CancellationTokenSource();
-            IEnumerable<string> packages = await resource.IdStartsWith("elm", true, cancellationToken.Token);
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            IEnumerable<string> packages = await resource.IdStartsWith("elm", true, cancellationTokenSource.Token);
 
             // Assert
             Assert.True(packages != null & packages.Count() > 0);
@@ -53,9 +53,9 @@ namespace NuGet.Protocol.VisualStudio.Tests
             Assert.NotNull(resource);
 
             // Act
-            CancellationTokenSource cancellationToken = new CancellationTokenSource();
-            Task<IEnumerable<string>> packagesTask = resource.IdStartsWith("elm", true, cancellationToken.Token);
-            cancellationToken.Cancel();
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            Task<IEnumerable<string>> packagesTask = resource.IdStartsWith("elm", true, cancellationTokenSource.Token);
+            cancellationTokenSource.Cancel();
 
             // Assert
             try

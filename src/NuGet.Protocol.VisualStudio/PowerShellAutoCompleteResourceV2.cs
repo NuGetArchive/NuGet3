@@ -105,11 +105,13 @@ namespace NuGet.Protocol.VisualStudio
             bool includePrerelease,
             CancellationToken token)
         {
+            token.ThrowIfCancellationRequested();
+
             // Cancellation token is not passed to NuGet.Core layer as it doesn't act upon it.
             return await Task.Run(() =>
             {
                 IEnumerable<IPackage> packages = packageRepository.GetPackages();
-                token.ThrowIfCancellationRequested();
+
 
                 if (!String.IsNullOrEmpty(searchFilter))
                 {
