@@ -67,5 +67,10 @@ namespace NuGet.Packaging
         {
             return PackagePathHelper.GetInstalledPackageFilePath(packageIdentity, this);
         }
+
+        public virtual string GetInstalledPackageFolder(PackageIdentity packageIdentity)
+        {
+            return PackagePathHelper.GetInstalledPackageFolder(packageIdentity, this);
+        }
     }
 }
