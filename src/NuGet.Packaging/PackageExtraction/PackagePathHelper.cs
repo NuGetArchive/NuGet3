@@ -69,7 +69,7 @@ namespace NuGet.Packaging
                 filter.EndsWith(PackagingCoreConstants.NuspecExtension, StringComparison.OrdinalIgnoreCase));
 
             // Check for package files one level deep. We use this at package install time
-            // to determine the set of installed packages. Installed packages are copied to 
+            // to determine the set of installed packages. Installed packages are copied to
             // {id}.{version}\{packagefile}.{extension}.
             foreach (var dir in GetDirectories(root, String.Empty))
             {
@@ -92,7 +92,7 @@ namespace NuGet.Packaging
             var name = Path.GetFileNameWithoutExtension(path);
             NuGetVersion parsedVersion;
 
-            // When matching by pattern, we will always have a version token. Packages without versions would be matched early on by the version-less path resolver 
+            // When matching by pattern, we will always have a version token. Packages without versions would be matched early on by the version-less path resolver
             // when doing an exact match.
             return name.Length > packageId.Length &&
                    NuGetVersion.TryParse(name.Substring(packageId.Length + 1), out parsedVersion) &&
@@ -120,7 +120,7 @@ namespace NuGet.Packaging
             var version = packageIdentity.Version;
 
             var root = packagePathResolver.Root;
-            // Files created by the path resolver. This would take into account the non-side-by-side scenario 
+            // Files created by the path resolver. This would take into account the non-side-by-side scenario
             // and we do not need to match this for id and version.
             var packageFileName = packagePathResolver.GetPackageFileName(packageIdentity);
             var manifestFileName = Path.ChangeExtension(packageFileName, PackagingCoreConstants.NuspecExtension);
@@ -144,7 +144,7 @@ namespace NuGet.Packaging
                 var partialManifestName = partialName + "*" + PackagingCoreConstants.NuspecExtension;
                 partialName += "*" + PackagingCoreConstants.NupkgExtension;
 
-                // Partial names would result is gathering package with matching major and minor but different build and revision. 
+                // Partial names would result is gathering package with matching major and minor but different build and revision.
                 // Attempt to match the version in the path to the version we're interested in.
                 var partialNameMatches = GetPackageFiles(root, partialName).Where(path => FileNameMatchesPattern(packageIdentity, path));
                 var partialManifestNameMatches = GetPackageFiles(root, partialManifestName).Where(
@@ -162,6 +162,25 @@ namespace NuGet.Packaging
             {
                 if (packageLookupPath.EndsWith(PackagingCoreConstants.NupkgExtension, StringComparison.OrdinalIgnoreCase) &&
                     File.Exists(packageLookupPath))
+                {
+                    // This is an installed package lookup path which matches the packageIdentity for the given packagePathResolver
+                    return packageLookupPath;
+                }
+            }
+
+            return null;
+        }
+
+        public static string GetInstalledPackageFolder(PackageIdentity packageIdentity, PackagePathResolver packagePathResolver)
+        {
+            var packageLookupPaths = GetPackageLookupPaths(packageIdentity, packagePathResolver);
+
+            // TODO: Not handling nuspec-only scenarios
+            foreach (var packageLookupPath in packageLookupPaths)
+            {
+                if (Directory.Exists(packageLookupPath) ||
+                    (packageLookupPath.EndsWith(PackagingCoreConstants.NupkgExtension, StringComparison.OrdinalIgnoreCase) &&
+                    File.Exists(packageLookupPath)))
                 {
                     // This is an installed package lookup path which matches the packageIdentity for the given packagePathResolver
                     return packageLookupPath;
