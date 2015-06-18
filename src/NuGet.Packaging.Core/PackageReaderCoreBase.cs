@@ -31,6 +31,8 @@ namespace NuGet.Packaging.Core
             return NuspecCore.GetMinClientVersion();
         }
 
+        public virtual PackageType GetPackageType() => NuspecCore.GetPackageType();
+
         public abstract Stream GetStream(string path);
 
         public abstract IEnumerable<string> GetFiles();
