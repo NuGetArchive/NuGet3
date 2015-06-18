@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using NuGet.Configuration;
 using NuGet.Frameworks;
@@ -14,17 +15,44 @@ namespace NuGet.Commands
     {
         public static readonly int DefaultDegreeOfConcurrency = 8;
 
+        public RestoreRequest(PackageSpec project, IEnumerable<PackageSource> sources)
+            : this(project, sources, string.Empty)
+        { }
+
         public RestoreRequest(PackageSpec project, IEnumerable<PackageSource> sources, string packagesDirectory)
         {
             Project = project;
             Sources = sources.ToList().AsReadOnly();
-            PackagesDirectory = packagesDirectory;
 
             WriteLockFile = true;
             WriteMSBuildFiles = true;
 
             ExternalProjects = new List<ExternalProjectReference>();
             CompatibilityProfiles = new HashSet<FrameworkRuntimePair>();
+
+            // Load default values
+            PackagesDirectory = packagesDirectory;
+
+            if (string.IsNullOrEmpty(PackagesDirectory))
+            {
+                PackagesDirectory = Environment.GetEnvironmentVariable(
+                    NuGetConstants.PackagesDirectoryEnvironmentVariable);
+            }
+
+            if (string.IsNullOrEmpty(PackagesDirectory))
+            {
+                // Try the default value from the USERPROFILE/HOME environment variable
+                var home = Environment.GetEnvironmentVariable("USERPROFILE");
+                if (string.IsNullOrEmpty(home))
+                {
+                    home = Environment.GetEnvironmentVariable("HOME");
+                }
+
+                if (!string.IsNullOrEmpty(home))
+                {
+                    PackagesDirectory = Path.Combine(home, NuGetConstants.NuGetUserProfileDirectory, NuGetConstants.PackagesDirectoryName);
+                }
+            }
         }
 
         /// <summary>
@@ -38,9 +66,9 @@ namespace NuGet.Commands
         public IReadOnlyList<PackageSource> Sources { get; }
 
         /// <summary>
-        /// The directory in which to install packages
+        /// The directory in which to install packages.
         /// </summary>
-        public string PackagesDirectory { get; }
+        public string PackagesDirectory { get; set; }
 
         /// <summary>
         /// A list of projects provided by external build systems (i.e. MSBuild)

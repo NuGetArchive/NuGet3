@@ -90,12 +90,6 @@ namespace NuGet.CommandLine
                             var rootDirectory = PackageSpecResolver.ResolveRootDirectory(projectPath);
                             _log.LogVerbose($"Found project root directory: {rootDirectory}");
 
-                            // Resolve the packages directory
-                            var packagesDir = packagesDirectory.HasValue() ?
-                                packagesDirectory.Value() :
-                                Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), ".nuget", "packages");
-                            _log.LogVerbose($"Using packages directory: {packagesDir}");
-
                             var packageSources = sources.Values.Select(s => new PackageSource(s));
                             if (!packageSources.Any())
                             {
@@ -108,14 +102,21 @@ namespace NuGet.CommandLine
 
                             var request = new RestoreRequest(
                                 project,
-                                packageSources,
-                                packagesDir);
+                                packageSources);
+
+                            if (packagesDirectory.HasValue())
+                            {
+                                request.PackagesDirectory = packagesDirectory.Value();
+                            }
+
+                            // Resolve the packages directory
+                            _log.LogVerbose($"Using packages directory: {request.PackagesDirectory}");
 
                             if (supports.HasValue())
                             {
                                 var supportsProfiles = supports.Values.Select(s =>
                                 {
-                                    if(!s.Contains("~"))
+                                    if (!s.Contains("~"))
                                     {
                                         return new FrameworkRuntimePair(NuGetFramework.Parse(s), null);
                                     }
