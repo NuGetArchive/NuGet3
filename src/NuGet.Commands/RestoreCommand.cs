@@ -44,7 +44,7 @@ namespace NuGet.Commands
 
         public async Task<RestoreResult> ExecuteAsync()
         {
-            var localRepository = new NuGetv3LocalRepository(_request.PackagesDirectory, checkPackageIdCase: false);
+            var localRepository = _request.PackagesDirectory.GetLocalRepository();
             var projectLockFilePath = string.IsNullOrEmpty(_request.LockFilePath) ?
                 Path.Combine(_request.Project.BaseDirectory, LockFileFormat.LockFileName) :
                 _request.LockFilePath;
@@ -123,8 +123,7 @@ namespace NuGet.Commands
             _log.LogInformation(Strings.FormatLog_RestoringPackages(_request.Project.FilePath));
 
             // Load repositories
-            var projectResolver = new PackageSpecResolver(_request.Project);
-            var nugetRepository = Repository.Factory.GetCoreV3(_request.PackagesDirectory);
+            var projectResolver = _request.ProjectResolver ?? new PackageSpecResolver(_request.Project);
 
             var context = new RemoteWalkContext();
 
@@ -149,9 +148,9 @@ namespace NuGet.Commands
             }
 
             context.LocalLibraryProviders.Add(
-                new SourceRepositoryDependencyProvider(nugetRepository, _log));
+                new SourceRepositoryDependencyProvider(_request.PackagesDirectory.GetSourceRepository(), _log));
 
-            foreach (var provider in _request.Sources.Select(s => CreateProviderFromSource(s, _request.NoCache)))
+            foreach (var provider in _request.Sources)
             {
                 context.RemoteLibraryProviders.Add(provider);
             }
@@ -657,7 +656,7 @@ namespace NuGet.Commands
             return null;
         }
 
-        private async Task InstallPackages(IEnumerable<RestoreTargetGraph> graphs, string packagesDirectory, HashSet<LibraryIdentity> allInstalledPackages, int maxDegreeOfConcurrency)
+        private async Task InstallPackages(IEnumerable<RestoreTargetGraph> graphs, PackagesDirectory packagesDirectory, HashSet<LibraryIdentity> allInstalledPackages, int maxDegreeOfConcurrency)
         {
             var packagesToInstall = graphs.SelectMany(g => g.Install.Where(match => allInstalledPackages.Add(match.Library)));
             if (maxDegreeOfConcurrency <= 1)
@@ -683,24 +682,13 @@ namespace NuGet.Commands
             }
         }
 
-        private async Task InstallPackage(RemoteMatch installItem, string packagesDirectory)
+        private Task InstallPackage(RemoteMatch installItem, PackagesDirectory packagesDirectory)
         {
             var packageIdentity = new PackageIdentity(installItem.Library.Name, installItem.Library.Version);
-            await NuGetPackageUtils.InstallFromSourceAsync(
+            return packagesDirectory.InstallPackage(
                 stream => installItem.Provider.CopyToAsync(installItem.Library, stream, CancellationToken.None),
                 packageIdentity,
-                packagesDirectory,
-                _log,
-                fixNuspecIdCasing: true,
-                token: CancellationToken.None);
-        }
-
-        private IRemoteDependencyProvider CreateProviderFromSource(PackageSource source, bool noCache)
-        {
-            _log.LogVerbose(Strings.FormatLog_UsingSource(source.Source));
-
-            var nugetRepository = Repository.Factory.GetCoreV3(source.Source);
-            return new SourceRepositoryDependencyProvider(nugetRepository, _log, noCache);
+                _log);
         }
     }
 }

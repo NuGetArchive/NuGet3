@@ -37,14 +37,14 @@ namespace NuGet.Commands.Test
 
             AddDependency(spec, "NuGet.Versioning", "1.0.7");
 
-            var request = new RestoreRequest(spec, sources, packagesDir);
+            var logger = new TestLogger();
+            var request = RestoreRequest.Create(logger, spec, sources, packagesDir, noCache: false);
             request.MaxDegreeOfConcurrency = 1;
             request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
             var lockFileFormat = new LockFileFormat();
 
             // Act
-            var logger = new TestLogger();
             var command = new RestoreCommand(logger, request);
             var result = await command.ExecuteAsync();
             var installed = result.GetAllInstalled();
@@ -80,14 +80,14 @@ namespace NuGet.Commands.Test
 
             AddDependency(spec, "WebGrease", "1.6.0");
 
-            var request = new RestoreRequest(spec, sources, packagesDir);
+            var logger = new TestLogger();
+            var request = RestoreRequest.Create(logger, spec, sources, packagesDir, noCache: false);
             request.MaxDegreeOfConcurrency = 1;
             request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
             var lockFileFormat = new LockFileFormat();
 
             // Act
-            var logger = new TestLogger();
             var command = new RestoreCommand(logger, request);
             var result = await command.ExecuteAsync();
             var installed = result.GetAllInstalled();
@@ -122,11 +122,11 @@ namespace NuGet.Commands.Test
 
             AddDependency(spec, "NuGet.Versioning", "1.0.7");
 
-            var request = new RestoreRequest(spec, sources, packagesDir);
+            var logger = new TestLogger();
+            var request = RestoreRequest.Create(logger, spec, sources, packagesDir, noCache: false);
             request.MaxDegreeOfConcurrency = 1;
             request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-            var logger = new TestLogger();
             var command = new RestoreCommand(logger, request);
             var firstRun = await command.ExecuteAsync();
 
@@ -160,12 +160,12 @@ namespace NuGet.Commands.Test
 
             AddDependency(spec, "NuGet.Versioning", "1.0.7");
 
-            var request = new RestoreRequest(spec, sources, packagesDir);
+            var logger = new TestLogger();
+            var request = RestoreRequest.Create(logger, spec, sources, packagesDir, noCache: false);
             request.MaxDegreeOfConcurrency = 1;
             request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
             // Act
-            var logger = new TestLogger();
             var command = new RestoreCommand(logger, request);
             var result = await command.ExecuteAsync();
             var nuspecPath = Path.Combine(packagesDir, "NuGet.Versioning", "1.0.7", "NuGet.Versioning.nuspec");
@@ -193,12 +193,12 @@ namespace NuGet.Commands.Test
 
             AddDependency(spec, "owin", "1.0");
 
-            var request = new RestoreRequest(spec, sources, packagesDir);
+            var logger = new TestLogger();
+            var request = RestoreRequest.Create(logger, spec, sources, packagesDir, noCache: false);
             request.MaxDegreeOfConcurrency = 1;
             request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
             // Act
-            var logger = new TestLogger();
             var command = new RestoreCommand(logger, request);
             var result = await command.ExecuteAsync();
             var nuspecPath = Path.Combine(packagesDir, "owin", "1.0.0", "owin.nuspec");
@@ -223,14 +223,14 @@ namespace NuGet.Commands.Test
 
             AddDependency(spec, "Newtonsoft.Json", "7.0.1-beta3");
 
-            var request = new RestoreRequest(spec, sources, packagesDir);
+            var logger = new TestLogger();
+            var request = RestoreRequest.Create(logger, spec, sources, packagesDir, noCache: false);
             request.MaxDegreeOfConcurrency = 1;
             request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
             var lockFileFormat = new LockFileFormat();
 
             // Act
-            var logger = new TestLogger();
             var command = new RestoreCommand(logger, request);
             var result = await command.ExecuteAsync();
             var installed = result.GetAllInstalled();
@@ -266,14 +266,14 @@ namespace NuGet.Commands.Test
 
             AddDependency(spec, "NuGet.Core", "2.8.3");
 
-            var request = new RestoreRequest(spec, sources, packagesDir);
+            var logger = new TestLogger();
+            var request = RestoreRequest.Create(logger, spec, sources, packagesDir, noCache: false);
             request.MaxDegreeOfConcurrency = 1;
             request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
             var lockFileFormat = new LockFileFormat();
 
             // Act
-            var logger = new TestLogger();
             var command = new RestoreCommand(logger, request);
             var result = await command.ExecuteAsync();
             var installed = result.GetAllInstalled();
@@ -311,14 +311,14 @@ namespace NuGet.Commands.Test
 
             AddDependency(spec, "NotARealPackage.ThisShouldNotExists.DontCreateIt.Seriously.JustDontDoIt.Please", "2.8.3");
 
-            var request = new RestoreRequest(spec, sources, packagesDir);
+            var logger = new TestLogger();
+            var request = RestoreRequest.Create(logger, spec, sources, packagesDir, noCache: false);
             request.MaxDegreeOfConcurrency = 1;
             request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
             var lockFileFormat = new LockFileFormat();
 
             // Act
-            var logger = new TestLogger();
             var command = new RestoreCommand(logger, request);
             var result = await command.ExecuteAsync();
             var installed = result.GetAllInstalled();
@@ -364,14 +364,14 @@ namespace NuGet.Commands.Test
             var specPath = Path.Combine(projectDir, "TestProject", "project.json");
             var spec = JsonPackageSpecReader.GetPackageSpec(project, "TestProject", specPath);
 
-            var request = new RestoreRequest(spec, sources, packagesDir);
+            var logger = new TestLogger();
+            var request = RestoreRequest.Create(logger, spec, sources, packagesDir, noCache: false);
             request.MaxDegreeOfConcurrency = 1;
             request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
             var lockFileFormat = new LockFileFormat();
 
             // Act
-            var logger = new TestLogger();
             var command = new RestoreCommand(logger, request);
             var result = await command.ExecuteAsync();
             var installed = result.GetAllInstalled();
@@ -458,13 +458,13 @@ namespace NuGet.Commands.Test
             var lockFile = lockFileFormat.Parse(lockFileContent);
             Assert.True(lockFile.IsLocked); // Just to make sure no-one accidentally unlocks it :)
 
-            var request = new RestoreRequest(spec, sources, packagesDir);
+            var logger = new TestLogger();
+            var request = RestoreRequest.Create(logger, spec, sources, packagesDir, noCache: false);
             request.MaxDegreeOfConcurrency = 1;
             request.WriteLockFile = false;
             request.ExistingLockFile = lockFile;
 
             // Act
-            var logger = new TestLogger();
             var command = new RestoreCommand(logger, request);
             var result = await command.ExecuteAsync();
             var installed = result.GetAllInstalled();
@@ -546,13 +546,13 @@ namespace NuGet.Commands.Test
             var lockFile = lockFileFormat.Parse(lockFileContent);
             Assert.True(lockFile.IsLocked); // Just to make sure no-one accidentally unlocks it :)
 
-            var request = new RestoreRequest(spec, sources, packagesDir);
+            var logger = new TestLogger();
+            var request = RestoreRequest.Create(logger, spec, sources, packagesDir, noCache: false);
             request.MaxDegreeOfConcurrency = 1;
             request.WriteLockFile = false;
             request.ExistingLockFile = lockFile;
 
             // Act
-            var logger = new TestLogger();
             var command = new RestoreCommand(logger, request);
             var result = await command.ExecuteAsync();
             var installed = result.GetAllInstalled();

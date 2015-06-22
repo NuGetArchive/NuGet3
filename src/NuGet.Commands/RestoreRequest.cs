@@ -5,8 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NuGet.Configuration;
+using NuGet.DependencyResolver;
 using NuGet.Frameworks;
+using NuGet.Logging;
 using NuGet.ProjectModel;
+using NuGet.Protocol.Core.Types;
+using NuGet.Protocol.Core.v3;
 
 namespace NuGet.Commands
 {
@@ -14,7 +18,11 @@ namespace NuGet.Commands
     {
         public static readonly int DefaultDegreeOfConcurrency = 8;
 
-        public RestoreRequest(PackageSpec project, IEnumerable<PackageSource> sources, string packagesDirectory)
+        /// <summary>
+        /// Creates a new <see cref="RestoreRequest"/>. This constructor is designed to be useful in testing scenarios
+        /// as well as other non-file-system scenarios. Most consumers should use <see cref="Create(ILogger, PackageSpec, IEnumerable{PackageSource}, string, bool)"/>.
+        /// </summary>
+        public RestoreRequest(PackageSpec project, IEnumerable<IRemoteDependencyProvider> sources, PackagesDirectory packagesDirectory)
         {
             Project = project;
             Sources = sources.ToList().AsReadOnly();
@@ -28,19 +36,35 @@ namespace NuGet.Commands
         }
 
         /// <summary>
+        /// Creates a new <see cref="RestoreRequest"/> for the most common scenario (local file system, etc.)
+        /// </summary>
+        public static RestoreRequest Create(ILogger log, PackageSpec project, IEnumerable<PackageSource> sources, string packagesDirectory, bool noCache)
+        {
+            return new RestoreRequest(
+                project,
+                sources.Select(s => CreateProviderFromSource(s, noCache, log)),
+                new PackagesDirectory(packagesDirectory));
+        }
+
+        /// <summary>
         /// The project to perform the restore on
         /// </summary>
         public PackageSpec Project { get; }
 
         /// <summary>
+        /// Gets the resolver to use to find projects. If not specified, uses a default <see cref="PackageSpecResolver"/>.
+        /// </summary>
+        public IPackageSpecResolver ProjectResolver { get; }
+
+        /// <summary>
         /// The complete list of sources to retrieve packages from (excluding caches)
         /// </summary>
-        public IReadOnlyList<PackageSource> Sources { get; }
+        public IReadOnlyList<IRemoteDependencyProvider> Sources { get; }
 
         /// <summary>
         /// The directory in which to install packages
         /// </summary>
-        public string PackagesDirectory { get; }
+        public PackagesDirectory PackagesDirectory { get; }
 
         /// <summary>
         /// A list of projects provided by external build systems (i.e. MSBuild)
@@ -73,11 +97,6 @@ namespace NuGet.Commands
         public int MaxDegreeOfConcurrency { get; set; } = DefaultDegreeOfConcurrency;
 
         /// <summary>
-        /// If set, ignore the cache when downloading packages
-        /// </summary>
-        public bool NoCache { get; set; }
-
-        /// <summary>
         /// If set, MSBuild files (.targets/.props) will be written for the project being restored
         /// </summary>
         public bool WriteMSBuildFiles { get; set; }
@@ -86,5 +105,13 @@ namespace NuGet.Commands
         /// Additional compatibility profiles to check compatibility with.
         /// </summary>
         public ISet<FrameworkRuntimePair> CompatibilityProfiles { get; }
+
+        private static IRemoteDependencyProvider CreateProviderFromSource(PackageSource source, bool noCache, ILogger log)
+        {
+            log.LogVerbose(Strings.FormatLog_UsingSource(source.Source));
+
+            var nugetRepository = Repository.Factory.GetCoreV3(source.Source);
+            return new SourceRepositoryDependencyProvider(nugetRepository, log, noCache);
+        }
     }
 }

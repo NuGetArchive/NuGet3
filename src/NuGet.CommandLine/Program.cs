@@ -106,10 +106,12 @@ namespace NuGet.CommandLine
                                 packageSources = packageSourceProvider.LoadPackageSources();
                             }
 
-                            var request = new RestoreRequest(
+                            var request = RestoreRequest.Create(
+                                _log,
                                 project,
                                 packageSources,
-                                packagesDir);
+                                packagesDir,
+                                noCache: false);
 
                             if (supports.HasValue())
                             {
