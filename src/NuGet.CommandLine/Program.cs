@@ -91,11 +91,11 @@ namespace NuGet.CommandLine
                             _log.LogVerbose($"Found project root directory: {rootDirectory}");
 
                             var packageSources = sources.Values.Select(s => new PackageSource(s));
+                            var settings = Settings.LoadDefaultSettings(projectPath,
+                                configFileName: null,
+                                machineWideSettings: null);
                             if (!packageSources.Any())
                             {
-                                var settings = Settings.LoadDefaultSettings(projectPath,
-                                    configFileName: null,
-                                    machineWideSettings: null);
                                 var packageSourceProvider = new PackageSourceProvider(settings);
                                 packageSources = packageSourceProvider.LoadPackageSources();
                             }
@@ -107,6 +107,10 @@ namespace NuGet.CommandLine
                             if (packagesDirectory.HasValue())
                             {
                                 request.PackagesDirectory = packagesDirectory.Value();
+                            }
+                            else
+                            {
+                                request.PackagesDirectory = SettingsUtility.GetGlobalPackagesFolder(settings);
                             }
 
                             // Resolve the packages directory

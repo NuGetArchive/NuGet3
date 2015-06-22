@@ -1,9 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using NuGet.Configuration;
 using NuGet.Frameworks;
@@ -16,7 +14,7 @@ namespace NuGet.Commands
         public static readonly int DefaultDegreeOfConcurrency = 8;
 
         public RestoreRequest(PackageSpec project, IEnumerable<PackageSource> sources)
-            : this(project, sources, string.Empty)
+            : this(project, sources, null)
         { }
 
         public RestoreRequest(PackageSpec project, IEnumerable<PackageSource> sources, string packagesDirectory)
@@ -30,29 +28,7 @@ namespace NuGet.Commands
             ExternalProjects = new List<ExternalProjectReference>();
             CompatibilityProfiles = new HashSet<FrameworkRuntimePair>();
 
-            // Load default values
             PackagesDirectory = packagesDirectory;
-
-            if (string.IsNullOrEmpty(PackagesDirectory))
-            {
-                PackagesDirectory = Environment.GetEnvironmentVariable(
-                    NuGetConstants.PackagesDirectoryEnvironmentVariable);
-            }
-
-            if (string.IsNullOrEmpty(PackagesDirectory))
-            {
-                // Try the default value from the USERPROFILE/HOME environment variable
-                var home = Environment.GetEnvironmentVariable("USERPROFILE");
-                if (string.IsNullOrEmpty(home))
-                {
-                    home = Environment.GetEnvironmentVariable("HOME");
-                }
-
-                if (!string.IsNullOrEmpty(home))
-                {
-                    PackagesDirectory = Path.Combine(home, NuGetConstants.NuGetUserProfileDirectory, NuGetConstants.PackagesDirectoryName);
-                }
-            }
         }
 
         /// <summary>

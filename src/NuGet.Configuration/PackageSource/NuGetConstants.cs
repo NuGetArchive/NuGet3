@@ -17,11 +17,7 @@ namespace NuGet.Configuration
         public static readonly string ReadmeFileName = "readme.txt";
         public static readonly string NuGetSolutionSettingsFolder = ".nuget";
 
-        public static readonly string PackagesDirectoryEnvironmentVariable = "NUGET_PACKAGES";
         
         public static readonly string FeedName = "nuget.org";
-
-        public static readonly string NuGetUserProfileDirectory = ".nuget";
-        public static readonly string PackagesDirectoryName = "packages";
     }
 }
