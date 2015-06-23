@@ -1,0 +1,14 @@
+{
+    "version": "3.1.0-*",
+    "dependencies": {
+        "Microsoft.Web.Xdt": "2.1.0",
+        "NuGet.ProjectModel": "3.1.0-*"
+    },
+    "frameworks": {
+        "net45": {
+            "frameworkAssemblies": {
+                "System.ComponentModel.Composition": ""
+            }
+        }
+    }
+}
