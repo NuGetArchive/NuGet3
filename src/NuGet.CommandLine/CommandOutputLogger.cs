@@ -10,7 +10,7 @@ namespace NuGet.CommandLine
     /// <summary>
     /// Logger to print formatted command output.
     /// </summary>
-    internal class CommandOutputLogger : ILogger
+    internal class CommandOutputLogger : Logging.ILogger
     {
         private enum LogLevel
         {

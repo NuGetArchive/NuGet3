@@ -12,22 +12,10 @@
     "NuGet.Common": { "version": "3.1.0-*", "type": "build" }
   },
   "frameworks": {
-    "net45": {
+    "net451": {
       "frameworkAssemblies": {
         "System.Xml":  "",
         "System.Xml.Linq": ""
-      }
-    },
-    "dnx451": {
-      "frameworkAssemblies": {
-        "System.Xml":  "",
-        "System.Xml.Linq": ""
-      }
-    },
-    "dnxcore50": {
-      "dependencies": {
-        "System.Linq.Parallel": "4.0.0-beta-*",
-        "System.Xml.XDocument": "4.0.10-beta-*"
       }
     }
   }

@@ -6,14 +6,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NuGet.Frameworks;
-using NuGet.Logging;
 using NuGet.ProjectModel;
 
 namespace NuGet.CommandLine
 {
     public class DiagnosticCommands
     {
-        private readonly ILogger _log;
+        private readonly Logging.ILogger _log;
 
         private const string Native = "\x1b[31mnative\x1b[39m";
         private const string Runtime = "\x1b[35mruntime\x1b[39m";
@@ -21,7 +20,7 @@ namespace NuGet.CommandLine
         private const string Framework = "\x1b[34mframework\x1b[39m";
         private const string Nothing = "\x1b[33mnothing\x1b[39m";
 
-        public DiagnosticCommands(ILogger log)
+        public DiagnosticCommands(Logging.ILogger log)
         {
             _log = log;
         }

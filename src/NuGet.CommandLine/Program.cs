@@ -18,7 +18,7 @@ namespace NuGet.CommandLine
 {
     public class Program
     {
-        private ILogger _log;
+        private Logging.ILogger _log;
 
         public int Main(string[] args)
         {
@@ -110,18 +110,18 @@ namespace NuGet.CommandLine
                                 Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), ".nuget", "packages");
                             _log.LogVerbose($"Using packages directory: {packagesDir}");
 
-                            var packageSources = sources.Values.Select(s => new PackageSource(s));
-                            var settings = Settings.LoadDefaultSettings(projectPath,
+                            var packageSources = sources.Values.Select(s => new Configuration.PackageSource(s));
+                            var settings = Configuration.Settings.LoadDefaultSettings(projectPath,
                                 configFileName: null,
                                 machineWideSettings: null);
                             if (!packageSources.Any())
                             {
-                                var packageSourceProvider = new PackageSourceProvider(settings);
+                                var packageSourceProvider = new Configuration.PackageSourceProvider(settings);
                                 packageSources = packageSourceProvider.LoadPackageSources();
                             }
 
                             packageSources = packageSources.Concat(
-                                fallBack.Values.Select(s => new PackageSource(s)));
+                                fallBack.Values.Select(s => new Configuration.PackageSource(s)));
 
                             var request = new RestoreRequest(
                                 project,
