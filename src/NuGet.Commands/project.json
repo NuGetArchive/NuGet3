@@ -12,7 +12,7 @@
     "NuGet.Common": { "version": "3.1.0-*", "type": "build" }
   },
   "frameworks": {
-    "net451": {
+    "net45": {
       "frameworkAssemblies": {
         "System.Xml":  "",
         "System.Xml.Linq": ""

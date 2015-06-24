@@ -258,4 +258,25 @@
   <data name="UnsupportedPackageFeature" xml:space="preserve">
     <value>Package '{0}' uses features that are not supported by the current version of NuGet. To upgrade NuGet, see http://docs.nuget.org/consume/installing-nuget.</value>
   </data>
+  <data name="PackageAlreadyExistsInProject" xml:space="preserve">
+    <value>Package '{0}' already exists in project '{1}'</value>
+  </data>
+  <data name="PackageDoesNotExistInFolder" xml:space="preserve">
+    <value>Package '{0}' does not exist in folder '{1}'</value>
+  </data>
+  <data name="PackageDoesNotExistInProject" xml:space="preserve">
+    <value>Package '{0}' does not exist in project '{1}'</value>
+  </data>
+  <data name="PackageDoesNotExisttInPackagesConfig" xml:space="preserve">
+    <value>Package '{0}' does not exists in '{1}'</value>
+  </data>
+  <data name="RemovedPackageFromFolder" xml:space="preserve">
+    <value>Removed package '{0}' from folder '{1}'</value>
+  </data>
+  <data name="RemovingPackageFromFolder" xml:space="preserve">
+    <value>Removing package '{0}' from folder '{1}'</value>
+  </data>
+  <data name="Argument_Cannot_Be_Null_Or_Empty" xml:space="preserve">
+    <value>Argument cannot be null or empty</value>
+  </data>
 </root>

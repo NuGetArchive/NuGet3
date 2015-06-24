@@ -4,13 +4,15 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Build.Construction;
 #if DNX451
 using Microsoft.Build.Execution;
 #endif
 
 namespace NuGet.CommandLine
 {
-    public class MsBuildUtility
+    public static class MsBuildUtility
     {
         private const string GetProjectReferenceBuildTarget = "GetProjectsReferencingProjectJson";
         private const string ProjectReferencesKey = "ProjectReferences";
@@ -62,6 +64,13 @@ namespace NuGet.CommandLine
             {
                 throw result.Exception;
             }
+        }
+
+        public static IEnumerable<string> GetAllProjectFileNames(string solutionFile)
+        {
+            var solution = SolutionFile.Parse(solutionFile);
+            return solution.ProjectsInOrder.Where(project => project.ProjectType != SolutionProjectType.SolutionFolder)
+                .Select(project => project.AbsolutePath);
         }
 #endif
     }

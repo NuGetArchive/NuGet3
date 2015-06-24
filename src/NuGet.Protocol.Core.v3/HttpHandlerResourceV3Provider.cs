@@ -28,22 +28,27 @@ namespace NuGet.Protocol.Core.v3
             HttpHandlerResourceV3 curResource = null;
 
             // Everyone gets a dataclient
-            var HttpHandler = TryGetCredentialAndProxy(source.PackageSource) ?? DataClient.DefaultHandler;
+            var HttpHandler = GetHttpMessageHandler(source.PackageSource);
             curResource = new HttpHandlerResourceV3(HttpHandler);
 
             return Task.FromResult(new Tuple<bool, INuGetResource>(curResource != null, curResource));
         }
 
+        public static HttpMessageHandler GetHttpMessageHandler(PackageSource source)
+        {
+            return TryGetCredentialAndProxy(source) ?? DataClient.DefaultHandler;
+        }
+
 #if DNXCORE50
 
-        private HttpMessageHandler TryGetCredentialAndProxy(PackageSource packageSource)
+        private static HttpMessageHandler TryGetCredentialAndProxy(PackageSource packageSource)
         {
             return new HttpClientHandler();
         }
 
 #else
 
-        private HttpMessageHandler TryGetCredentialAndProxy(PackageSource packageSource)
+        private static HttpMessageHandler TryGetCredentialAndProxy(PackageSource packageSource)
         {
             var uri = new Uri(packageSource.Source);
             var proxy = ProxyCache.Instance.GetProxy(uri);
