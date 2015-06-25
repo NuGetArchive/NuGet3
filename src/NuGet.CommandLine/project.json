@@ -19,6 +19,8 @@
     "frameworks": {
         "dnx451": {
             "frameworkAssemblies": {
+                "System.ComponentModel.Composition": "4.0.0.0",
+                "System.ComponentModel.Composition.Registration": "4.0.0.0",
                 "Microsoft.Build.Framework": "14.0.0",
                 "Microsoft.Build": "14.0.0"
             }

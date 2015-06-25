@@ -76,7 +76,7 @@ namespace NuGet.CommandLine
                 ++redirectionCount;
                 if (redirectionCount > MaxRediretionCount)
                 {
-                    throw new WebException(NuGetResources.Error_TooManyRedirections);
+                    throw new WebException("NuGetResources.Error_TooManyRedirections");
                 }
             }
         }

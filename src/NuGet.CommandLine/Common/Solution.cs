@@ -1,12 +1,10 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 
-namespace NuGet.CommandLine
+namespace NuGet.Common
 {
     /// <summary>
     /// Represents the solution loaded from a sln file. We use the internal class 
@@ -21,24 +19,22 @@ namespace NuGet.CommandLine
 
         public List<ProjectInSolution> Projects { get; private set; }
 
-        public Solution(string solutionFileName)
+        public Solution(IFileSystem fileSystem, string solutionFileName)
         {
             var solutionParser = _solutionParserType.GetConstructor(
-                BindingFlags.Instance | BindingFlags.NonPublic,
+                BindingFlags.Instance | BindingFlags.NonPublic, 
                 binder: null, types: Type.EmptyTypes, modifiers: null).Invoke(null);
-            using (var streamReader = new StreamReader(File.OpenRead(solutionFileName)))
+            using (var streamReader = new StreamReader(fileSystem.OpenFile(solutionFileName)))
             {
                 _solutionReaderProperty.SetValue(solutionParser, streamReader, index: null);
                 _parseSolutionMethod.Invoke(solutionParser, parameters: null);
             }
-
             var projects = new List<ProjectInSolution>();
             foreach (var proj in (object[])_projectsProperty.GetValue(solutionParser, index: null))
             {
                 projects.Add(new ProjectInSolution(proj));
             }
-
-            Projects = projects;
+            this.Projects = projects;
         }
 
         private static Type GetSolutionParserType()
@@ -48,7 +44,7 @@ namespace NuGet.CommandLine
 
             if (solutionParserType == null)
             {
-                throw new InvalidOperationException("Error_CannotLoadTypeSolutionParser");
+                throw new CommandLineException(LocalizedResourceManager.GetString("Error_CannotLoadTypeSolutionParser"));
             }
 
             return solutionParserType;
@@ -83,5 +79,5 @@ namespace NuGet.CommandLine
 
             return null;
         }
-    }
+    }    
 }

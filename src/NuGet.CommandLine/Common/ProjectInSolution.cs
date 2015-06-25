@@ -1,10 +1,7 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-
-using System;
+﻿using System;
 using System.Reflection;
 
-namespace NuGet.CommandLine
+namespace NuGet.Common
 {
     /// <summary>
     /// Represents a project in a sln file.
@@ -18,12 +15,12 @@ namespace NuGet.CommandLine
         /// <summary>
         /// The path of the project relative to the solution.
         /// </summary>
-        public string RelativePath { get; }
+        public string RelativePath { get; private set; }
 
         /// <summary>
         /// Indicates if the project is a solution folder.
         /// </summary>
-        public bool IsSolutionFolder { get; }
+        public bool IsSolutionFolder { get; private set; }        
 
         public ProjectInSolution(object solutionProject)
         {
@@ -38,7 +35,7 @@ namespace NuGet.CommandLine
             var projectInSolutionType = assembly.GetType("Microsoft.Build.Construction.ProjectInSolution");
             if (projectInSolutionType == null)
             {
-                throw new InvalidOperationException("Error_CannotLoadTypeProjectInSolution");
+                throw new CommandLineException(LocalizedResourceManager.GetString("Error_CannotLoadTypeProjectInSolution"));
             }
 
             return projectInSolutionType;
@@ -52,6 +49,6 @@ namespace NuGet.CommandLine
         private static PropertyInfo GetProjectTypeProperty()
         {
             return _projectInSolutionType.GetProperty("ProjectType", BindingFlags.NonPublic | BindingFlags.Instance);
-        }
+        }        
     }
 }
