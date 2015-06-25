@@ -47,6 +47,12 @@ namespace NuGet.Packaging
                         log.LogInformation($"Installing {packageIdentity.Id} {packageIdentity.Version}");
 
                         Directory.CreateDirectory(targetPath);
+
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        // Do not stop the package extraction after this point
+                        // based on CancellationToken
+
                         using (var nupkgStream = new FileStream(
                             targetNupkg,
                             FileMode.Create,
