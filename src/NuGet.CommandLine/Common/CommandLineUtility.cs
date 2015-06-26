@@ -17,6 +17,15 @@ namespace NuGet
             return value;
         }
 
+        public static void ValidateSource(string source)
+        {
+            Uri result;
+            if (!Uri.TryCreate(source, UriKind.Absolute, out result))
+            {
+                throw new CommandLineException(LocalizedResourceManager.GetString("InvalidSource"), source);
+            }
+        }
+
         public static string GetSourceDisplayName(string source)
         {
             if (String.IsNullOrEmpty(source) || source.Equals(NuGetConstants.DefaultGalleryServerUrl, StringComparison.OrdinalIgnoreCase))

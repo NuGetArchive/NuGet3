@@ -4,11 +4,11 @@ using NuGet.ProjectManagement;
 
 namespace NuGet.CommandLine
 {
-    public class ConsoleContext : INuGetProjectContext
+    public class ConsoleProjectContextContext : INuGetProjectContext
     {
         private readonly Logging.ILogger _logger;
 
-        public ConsoleContext(Logging.ILogger logger)
+        public ConsoleProjectContextContext(Logging.ILogger logger)
         {
             _logger = logger;
         }

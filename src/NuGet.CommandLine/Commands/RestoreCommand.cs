@@ -172,48 +172,6 @@ namespace NuGet.CommandLine
             return command.ExecuteAsync();
         }
 
-        private IEnumerable<Configuration.PackageSource> GetPackageSources(Configuration.ISettings settings)
-        {
-            var packageSourceProvider = new Configuration.PackageSourceProvider(settings);
-            var availableSources = packageSourceProvider.LoadPackageSources().Where(source => source.IsEnabled);
-            var packageSources = new List<Configuration.PackageSource>();
-            foreach (var source in Source)
-            {
-                packageSources.Add(Common.PackageSourceProviderExtensions.ResolveSource(packageSources, source));
-            }
-
-            if (packageSources.Count == 0)
-            {
-                packageSources.AddRange(packageSourceProvider.LoadPackageSources());
-            }
-
-            foreach (var source in FallbackSource)
-            {
-                packageSources.Add(Common.PackageSourceProviderExtensions.ResolveSource(packageSources, source));
-            }
-            
-            return packageSources;
-        }
-
-        private Configuration.ISettings ReadSettings(string workingDirectory)
-        {
-            Configuration.ISettings settings;
-            if (!string.IsNullOrEmpty(ConfigFile))
-            {
-                settings = Configuration.Settings.LoadDefaultSettings(Path.GetFullPath(ConfigFile),
-                    configFileName: null,
-                    machineWideSettings: null);
-            }
-            else
-            {
-                settings = Configuration.Settings.LoadDefaultSettings(workingDirectory,
-                    configFileName: null,
-                    machineWideSettings: null);
-            }
-
-            return settings;
-        }
-
         private Task PerformNuGetV2Restore()
         {
             DetermineRestoreMode();
@@ -252,7 +210,7 @@ namespace NuGet.CommandLine
                     isMissing: true));
             var packageRestoreContext = new PackageRestoreContext(nuGetPackageManager, packageRestoreData, CancellationToken.None);
 
-            return PackageRestoreManager.RestoreMissingPackagesAsync(packageRestoreContext, new ConsoleContext(Logger));
+            return PackageRestoreManager.RestoreMissingPackagesAsync(packageRestoreContext, new ConsoleProjectContextContext(Logger));
         }
 
         internal void DetermineRestoreMode()
@@ -260,7 +218,7 @@ namespace NuGet.CommandLine
             if (Arguments.Count == 0)
             {
                 // look for solution files first
-                _solutionFileFullPath = GetSolutionFile("");
+                _solutionFileFullPath = GetSolutionFile(String.Empty);
                 if (_solutionFileFullPath != null)
                 {
                     _restoringForSolution = true;
@@ -384,17 +342,6 @@ namespace NuGet.CommandLine
             }
 
             return installedPackageReferences;
-        }
-
-        private IEnumerable<Packaging.PackageReference> GetInstalledPackageReferences(string projectConfigFilePath)
-        {
-            if (File.Exists(projectConfigFilePath))
-            {
-                var reader = new PackagesConfigReader(XDocument.Load(projectConfigFilePath));
-                return reader.GetPackages();
-            }
-
-            return Enumerable.Empty<Packaging.PackageReference>();
         }
     }
 }
