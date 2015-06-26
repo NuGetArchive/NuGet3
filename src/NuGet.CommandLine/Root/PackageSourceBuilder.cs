@@ -5,22 +5,17 @@ namespace NuGet
 {
     internal static class PackageSourceBuilder
     {
-        internal static PackageSourceProvider CreateSourceProvider(ISettings settings)
+        internal static Configuration.PackageSourceProvider CreateSourceProvider(Configuration.ISettings settings)
         {
-            var defaultPackageSource = new PackageSource(NuGetConstants.V2FeedUrl);
+            var defaultPackageSource = new Configuration.PackageSource(NuGetConstants.V2FeedUrl);
 
-            var officialPackageSource = new PackageSource(NuGetConstants.V2FeedUrl, LocalizedResourceManager.GetString("OfficialPackageSourceName"));
-            var v1PackageSource = new PackageSource(NuGetConstants.V1FeedUrl, LocalizedResourceManager.GetString("OfficialPackageSourceName"));
-            var legacyV2PackageSource = new PackageSource(NuGetConstants.V2LegacyFeedUrl, LocalizedResourceManager.GetString("OfficialPackageSourceName"));
+            var officialPackageSource = new Configuration.PackageSource(NuGetConstants.V2FeedUrl, LocalizedResourceManager.GetString("OfficialPackageSourceName"));
+            var v1PackageSource = new Configuration.PackageSource(NuGetConstants.V1FeedUrl, LocalizedResourceManager.GetString("OfficialPackageSourceName"));
+            var legacyV2PackageSource = new Configuration.PackageSource(NuGetConstants.V2LegacyFeedUrl, LocalizedResourceManager.GetString("OfficialPackageSourceName"));
 
-            var packageSourceProvider = new PackageSourceProvider(
+            var packageSourceProvider = new Configuration.PackageSourceProvider(
                 settings,
-                new[] { defaultPackageSource },
-                new Dictionary<PackageSource, PackageSource> { 
-                            { v1PackageSource, officialPackageSource },
-                            { legacyV2PackageSource, officialPackageSource }
-                        }
-            );
+                new[] { defaultPackageSource });
             return packageSourceProvider;
         }
     }

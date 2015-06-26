@@ -39,6 +39,12 @@ namespace NuGet.CommandLine
             });
         }
 
+
+        internal CommandOutputLogger()
+        {
+            _verbosity = new Lazy<LogLevel>(() => LogLevel.Verbose);
+        }
+
         public void LogDebug(string data)
         {
             LogInternal(LogLevel.Debug, data);

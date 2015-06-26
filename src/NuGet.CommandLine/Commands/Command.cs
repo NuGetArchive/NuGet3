@@ -19,9 +19,6 @@ namespace NuGet.CommandLine
             Arguments = new List<string>();
         }
 
-        [Import]
-        public IFileSystem FileSystem { get; set; }
-
         public IList<string> Arguments { get; private set; }
 
         [Import]
@@ -37,7 +34,7 @@ namespace NuGet.CommandLine
         public ICommandManager Manager { get; set; }
 
         [Import]
-        public IMachineWideSettings MachineWideSettings { get; set; }
+        public Configuration.IMachineWideSettings MachineWideSettings { get; set; }
 
         [Option("help", AltName = "?")]
         public bool Help { get; set; }
@@ -51,9 +48,9 @@ namespace NuGet.CommandLine
         [Option(typeof(NuGetCommand), "Option_ConfigFile")]
         public string ConfigFile { get; set; }
 
-        protected internal ISettings Settings { get; set; }
+        protected internal Configuration.ISettings Settings { get; set; }
 
-        protected internal IPackageSourceProvider SourceProvider { get; set; }
+        protected internal Configuration.IPackageSourceProvider SourceProvider { get; set; }
 
         protected internal IPackageRepositoryFactory RepositoryFactory { get; set; }
 
@@ -84,8 +81,8 @@ namespace NuGet.CommandLine
             {
                 if (String.IsNullOrEmpty(ConfigFile))
                 {
-                    Settings = NuGet.Settings.LoadDefaultSettings(
-                        FileSystem, 
+                    Settings = Configuration.Settings.LoadDefaultSettings(
+                        Directory.GetCurrentDirectory(), 
                         configFileName: null, 
                         machineWideSettings: MachineWideSettings);
                 }
@@ -94,8 +91,8 @@ namespace NuGet.CommandLine
                     var directory = Path.GetDirectoryName(Path.GetFullPath(ConfigFile));
                     var configFileName = Path.GetFileName(ConfigFile);
                     var configFileSystem = new PhysicalFileSystem(directory);
-                    Settings = NuGet.Settings.LoadDefaultSettings(
-                        configFileSystem,
+                    Settings = Configuration.Settings.LoadDefaultSettings(
+                        Directory.GetCurrentDirectory(),
                         configFileName,
                         MachineWideSettings);
                 }
@@ -104,12 +101,12 @@ namespace NuGet.CommandLine
 
                 // Register an additional provider for the console specific application so that the user
                 // will be prompted if a proxy is set and credentials are required
-                var credentialProvider = new SettingsCredentialProvider(
-                    new ConsoleCredentialProvider(Console),
-                    SourceProvider, 
-                    Console);
-                HttpClient.DefaultCredentialProvider = credentialProvider;
-                RepositoryFactory = new NuGet.Common.CommandLineRepositoryFactory(Console);
+                //var credentialProvider = new SettingsCredentialProvider(
+                //    new ConsoleCredentialProvider(Console),
+                //    SourceProvider, 
+                //    Console);
+                //HttpClient.DefaultCredentialProvider = credentialProvider;
+                RepositoryFactory = new CommandLineRepositoryFactory(Console);
 
                 ExecuteCommandAsync().Wait();
             }

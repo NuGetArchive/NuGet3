@@ -31,8 +31,6 @@ namespace NuGet
 
         public static int Main(string[] args)
         {
-            System.Diagnostics.Debugger.Launch();
-
 #if DEBUG
             if (args.Contains("--debug"))
             {
@@ -157,7 +155,7 @@ namespace NuGet
                     container.ComposeExportedValue<IConsole>(console);
                     container.ComposeExportedValue<IPackageRepositoryFactory>(new NuGet.Common.CommandLineRepositoryFactory(console));
                     container.ComposeExportedValue<IFileSystem>(fileSystem);
-                    container.ComposeExportedValue<Logging.ILogger>(Logging.NullLogger.Instance);
+                    container.ComposeExportedValue<Logging.ILogger>(new CommandOutputLogger());
                     container.ComposeParts(this);
                 }
             }

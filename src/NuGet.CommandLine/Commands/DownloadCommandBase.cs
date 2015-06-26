@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using NuGet.Common;
+using NuGet.Configuration;
 
 namespace NuGet.CommandLine
 {
@@ -37,7 +38,7 @@ namespace NuGet.CommandLine
             string packageSaveModeValue = PackageSaveMode;
             if (string.IsNullOrEmpty(packageSaveModeValue))
             {
-                packageSaveModeValue = Settings.GetConfigValue("PackageSaveMode");
+                packageSaveModeValue = SettingsUtility.GetConfigValue(Settings, "PackageSaveMode");
             }
 
             EffectivePackageSaveMode = PackageSaveModes.None;
