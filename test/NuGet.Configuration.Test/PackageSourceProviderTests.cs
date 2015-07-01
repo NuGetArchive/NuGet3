@@ -2269,7 +2269,7 @@ namespace NuGet.Configuration.Test
                                   loadAppDataSettings: false);
 
                 // Act
-                PackageSourceProvider.MigrateDefaultFeedToNewerProtocolCore(settings);
+                PackageSourceProvider.AddDefaultSourcesToRootNuGetConfigCore(settings);
 
                 // Assert
                 Assert.Equal(configContents, File.ReadAllText(configFilePath));
@@ -2307,7 +2307,7 @@ namespace NuGet.Configuration.Test
                                   loadAppDataSettings: false);
 
                 // Act
-                PackageSourceProvider.MigrateDefaultFeedToNewerProtocolCore(settings);
+                PackageSourceProvider.AddDefaultSourcesToRootNuGetConfigCore(settings);
 
                 // Assert
                 Assert.Equal(configContents, File.ReadAllText(configFilePath));
@@ -2339,8 +2339,8 @@ namespace NuGet.Configuration.Test
     <packageSources>
         
         
-        <add key=""nuget.org"" value=""https://nuget.org/api/v2"" />
         <add key=""nuget.org"" value=""https://api.nuget.org/v3/index.json"" protocolVersion=""3"" />
+        <add key=""nuget.org"" value=""https://nuget.org/api/v2"" />
         <add key=""Microsoft and .NET"" value=""https://www.nuget.org/api/v2/curated-feeds/microsoftdotnet/"" />
     </packageSources>
     <disabledSources />
@@ -2358,7 +2358,61 @@ namespace NuGet.Configuration.Test
                                   loadAppDataSettings: false);
 
                 // Act
-                PackageSourceProvider.MigrateDefaultFeedToNewerProtocolCore(settings);
+                PackageSourceProvider.AddDefaultSourcesToRootNuGetConfigCore(settings);
+
+                // Assert
+                Assert.Equal(expected, File.ReadAllText(configFilePath));
+            }
+        }
+
+        [Fact]
+        public void MigrateDefaultFeedToNewerProtocol_DoesNotChangeRelativeSources()
+        {
+            using (var mockBaseDirectory = TestFilesystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                var configContents =
+                    @"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+    <packageSources>
+        <add key=""local"" value=""c:\users\testuser\.nuget"" />
+        <add key=""nuget.org"" value=""http://not-nuget.org"" />
+        <add key=""test"" value=""Relative-Path\Test"" />
+    </packageSources>
+    <disabledSources />
+    <config>
+        <add key=""test"" value=""test1"" />
+    </config>
+</configuration>
+";
+                var expected =
+@"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+    <packageSources>
+        
+        
+        
+        <add key=""local"" value=""c:\users\testuser\.nuget"" />
+        <add key=""nuget.org"" value=""https://api.nuget.org/v3/index.json"" protocolVersion=""3"" />
+        <add key=""nuget.org"" value=""http://not-nuget.org"" />
+        <add key=""test"" value=""Relative-Path\Test"" />
+    </packageSources>
+    <disabledSources />
+    <config>
+        <add key=""test"" value=""test1"" />
+    </config>
+</configuration>
+";
+                var configFilePath = Path.Combine(mockBaseDirectory.Path, "NuGet.config");
+                File.WriteAllText(configFilePath, configContents);
+
+                var settings = Settings.LoadDefaultSettings(mockBaseDirectory.Path,
+                                  configFileName: null,
+                                  machineWideSettings: null,
+                                  loadAppDataSettings: false);
+
+                // Act
+                PackageSourceProvider.AddDefaultSourcesToRootNuGetConfigCore(settings);
 
                 // Assert
                 Assert.Equal(expected, File.ReadAllText(configFilePath));
@@ -2395,7 +2449,7 @@ namespace NuGet.Configuration.Test
                 // Act
                 using (var file = File.Open(configFilePath, FileMode.Open, FileAccess.Write, FileShare.None))
                 {
-                    PackageSourceProvider.MigrateDefaultFeedToNewerProtocolCore(settings);
+                    PackageSourceProvider.AddDefaultSourcesToRootNuGetConfigCore(settings);
                 }
 
                 // Assert
