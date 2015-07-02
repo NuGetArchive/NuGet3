@@ -472,6 +472,8 @@ namespace NuGet.Configuration
                 sectionElement = GetOrCreateSection(ConfigXDocument.Root, section);
             }
 
+            // When updating attempt to preserve the clear tag (and any sources that appear prior to it)
+            // to avoid creating extra diffs in the source.
             RemoveElementAfterClearTag(sectionElement);
 
             foreach (var value in valuesToWrite)
@@ -496,22 +498,36 @@ namespace NuGet.Configuration
                 return;
             }
 
-            var removeElmentList = new List<XElement>();
-            foreach (var element in sectionElement.Elements())
+            var nodesToRemove = new List<XNode>();
+            foreach (var node in sectionElement.Nodes())
             {
+                if (node.NodeType != XmlNodeType.Element)
+                {
+                    nodesToRemove.Add(node);
+                    continue;
+                }
+
+                var element = (XElement)node;
+
                 if (element.Name.LocalName.Equals("clear", StringComparison.OrdinalIgnoreCase))
                 {
-                    removeElmentList.Clear();
+                    nodesToRemove.Clear();
                 }
                 else 
                 {
-                    removeElmentList.Add(element);
+                    nodesToRemove.Add(element);
                 }
             }
 
-            foreach (var element in removeElmentList)
+            // Special case for the scenario where the clear element is the last element in the
+            // section (followed by whitespace and comments). In this case, we can avoid removing any
+            // node and preserving the original formatting.
+            if (nodesToRemove.Any(node => node.NodeType == XmlNodeType.Element))
             {
-                element.Remove();
+                foreach (var element in nodesToRemove)
+                {
+                    element.Remove();
+                }
             }
         }
 
