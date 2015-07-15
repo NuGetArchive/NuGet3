@@ -93,11 +93,16 @@ namespace NuGet.DependencyResolver
 
             while (current != null)
             {
-                result = (current.Item?.Key ?? current.Key).ToString() + (string.IsNullOrEmpty(result) ? "" : " -> " + result);
+                result = current.PrettyPrint() + (string.IsNullOrEmpty(result) ? "" : " -> " + result);
                 current = current.OuterNode;
             }
 
             return result;
+        }
+
+        private static string PrettyPrint<TItem>(this GraphNode<TItem> node)
+        {
+            return node.Key.Name + " " + node.Key.VersionRange?.PrettyPrint();
         }
 
         public static bool TryResolveConflicts<TItem>(this GraphNode<TItem> root)
