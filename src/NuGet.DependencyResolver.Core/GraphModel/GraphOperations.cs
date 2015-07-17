@@ -68,7 +68,7 @@ namespace NuGet.DependencyResolver
                     {
                         if (sideNode != node && sideNode.Key.Name == node.Key.Name)
                         {
-                            if (RemoteDependencyWalker.IsGreaterThanOrEqualTo(node.Key.VersionRange, sideNode.Key.VersionRange))
+                            if (!RemoteDependencyWalker.IsGreaterThanOrEqualTo(sideNode.Key.VersionRange, node.Key.VersionRange))
                             {
                                 workingDowngrades[node] = sideNode;
                             }
