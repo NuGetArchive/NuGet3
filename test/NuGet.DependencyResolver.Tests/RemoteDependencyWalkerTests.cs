@@ -15,6 +15,32 @@ namespace NuGet.DependencyResolver.Tests
     public class RemoteDependencyWalkerTests
     {
         [Fact]
+        public async Task DowngradeSkippedIfEqual()
+        {
+            var context = new RemoteWalkContext();
+            var provider = new DependencyProvider();
+            provider.Package("A", "1.0")
+                    .DependsOn("B", "2.0")
+                    .DependsOn("C", "2.0");
+
+            provider.Package("B", "2.0")
+                    .DependsOn("C", "2.0");
+
+            provider.Package("C", "2.0");
+
+            context.LocalLibraryProviders.Add(provider);
+            var walker = new RemoteDependencyWalker(context);
+            var node = await DoWalkAsync(walker, "A");
+
+            var downgrades = new List<Tuple<GraphNode<RemoteResolveResult>, GraphNode<RemoteResolveResult>>>();
+            var cycles = new List<GraphNode<RemoteResolveResult>>();
+
+            GetDowngrades(node, downgrades, cycles);
+
+            Assert.Equal(0, downgrades.Count);
+        }
+
+        [Fact]
         public async Task DowngradeAtRootIsDetected()
         {
             var context = new RemoteWalkContext();
@@ -141,8 +167,6 @@ namespace NuGet.DependencyResolver.Tests
             var walker = new RemoteDependencyWalker(context);
             var node = await DoWalkAsync(walker, "A");
 
-            node.Dump(Console.WriteLine);
-
             var downgrades = new List<Tuple<GraphNode<RemoteResolveResult>, GraphNode<RemoteResolveResult>>>();
             var cycles = new List<GraphNode<RemoteResolveResult>>();
 
@@ -176,8 +200,6 @@ namespace NuGet.DependencyResolver.Tests
             context.LocalLibraryProviders.Add(provider);
             var walker = new RemoteDependencyWalker(context);
             var node = await DoWalkAsync(walker, "A");
-
-            node.Dump(Console.WriteLine);
 
             var downgrades = new List<Tuple<GraphNode<RemoteResolveResult>, GraphNode<RemoteResolveResult>>>();
             var cycles = new List<GraphNode<RemoteResolveResult>>();
