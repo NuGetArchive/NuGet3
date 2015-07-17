@@ -176,6 +176,43 @@ namespace NuGet.DependencyResolver.Tests
         }
 
         [Fact]
+        public async Task DowngradeThenUpgradeThenDowngrade()
+        {
+            var context = new RemoteWalkContext();
+            var provider = new DependencyProvider();
+            provider.Package("A", "1.0")
+                    .DependsOn("B", "1.0")
+                    .DependsOn("C", "1.0");
+
+            provider.Package("B", "1.0");
+
+            provider.Package("C", "1.0")
+                    .DependsOn("B", "2.0")
+                    .DependsOn("D", "1.0");
+
+            provider.Package("B", "2.0");
+
+            provider.Package("D", "1.0")
+                    .DependsOn("B", "1.0");
+
+            context.LocalLibraryProviders.Add(provider);
+            var walker = new RemoteDependencyWalker(context);
+            var node = await DoWalkAsync(walker, "A");
+
+            var downgrades = new List<Tuple<GraphNode<RemoteResolveResult>, GraphNode<RemoteResolveResult>>>();
+            var cycles = new List<GraphNode<RemoteResolveResult>>();
+
+            GetDowngrades(node, downgrades, cycles);
+
+            Assert.Equal(1, downgrades.Count);
+            var downgraded = downgrades[0].Item1;
+            var downgradedBy = downgrades[0].Item2;
+
+            AssertPath(downgraded, "A 1.0", "C 1.0", "B 2.0");
+            AssertPath(downgradedBy, "A 1.0", "B 1.0");
+        }
+
+        [Fact]
         public async Task DoubleDowngrade()
         {
             var context = new RemoteWalkContext();
