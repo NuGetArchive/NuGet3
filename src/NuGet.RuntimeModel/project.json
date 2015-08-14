@@ -6,9 +6,9 @@
 
     "dependencies": {
         "Newtonsoft.Json": "6.0.6",
-        "NuGet.Common": { "type": "build",  "version": "3.1.2-*" },
-        "NuGet.Versioning": "3.1.2-*",
-        "NuGet.Frameworks": "3.1.2-*"
+        "NuGet.Common": { "type": "build",  "version": "3.2-*" },
+        "NuGet.Versioning": "3.2-*",
+        "NuGet.Frameworks": "3.2-*"
     },
     "frameworks": {
         "net45": {
