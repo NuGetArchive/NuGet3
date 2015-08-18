@@ -4,6 +4,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet.Configuration;
@@ -83,7 +84,7 @@ namespace NuGet.Protocol.Core.v3
                 CredentialStore.Instance.Add(uri, credential);
             }
 
-            return new CredentialPromptWebRequestHandler()
+            return new CredentialPromptWebRequestHandler(uri)
             {
                 Proxy = proxy,
                 Credentials = credential
@@ -92,12 +93,21 @@ namespace NuGet.Protocol.Core.v3
 
         private class CredentialPromptWebRequestHandler : WebRequestHandler
         {
+            private readonly Uri _serviceIndexUri;
+
+            public CredentialPromptWebRequestHandler(Uri serviceIndexUri)
+            {
+                _serviceIndexUri = serviceIndexUri;
+            }
+
             protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {
                 while (true)
                 {
                     try
                     {
+                        AddBasicAuthorizationHeaderIfAvailable(request);
+
                         var response = await base.SendAsync(request, cancellationToken);
                         if (HttpHandlerResourceV3.ProxyPassed != null && Proxy != null)
                         {
@@ -125,6 +135,38 @@ namespace NuGet.Protocol.Core.v3
                         {
                             throw;
                         }
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Adds an explicit Authorization header to the request, if basic auth credentials for the package source
+            /// are available, no authorization header already exists on the request, and the request is for the
+            /// same scheme and authority as the service index.
+            /// </summary>
+            /// <remarks>
+            /// Resolves https://github.com/NuGet/Home/issues/742
+            /// "NuGet should set PreAuthenticate to true to reduce the number of web requests"
+            /// Note that PreAuthenticate doesn't do what you'd expect (it still doesn't use creds on the very first request),
+            /// so we set Authorization manually.
+            /// </remarks>
+            private void AddBasicAuthorizationHeaderIfAvailable(HttpRequestMessage request)
+            {
+                if (this.Credentials != null &&
+                    !request.Headers.Contains("Authorization") &&
+                    Uri.Compare(
+                        request.RequestUri,
+                        _serviceIndexUri,
+                        UriComponents.SchemeAndServer,
+                        UriFormat.Unescaped, StringComparison.InvariantCultureIgnoreCase) == 0)
+                {
+                    var basicCred = this.Credentials.GetCredential(_serviceIndexUri, "Basic");
+
+                    if (basicCred != null)
+                    {
+                        var rawUserAndPass = Encoding.UTF8.GetBytes(String.Format("{0}:{1}", basicCred.UserName, basicCred.Password));
+                        var authValueEncoded = Convert.ToBase64String(rawUserAndPass);
+                        request.Headers.Add("Authorization", String.Format("Basic {0}", authValueEncoded));
                     }
                 }
             }
