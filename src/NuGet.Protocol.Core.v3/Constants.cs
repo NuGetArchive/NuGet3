@@ -19,6 +19,7 @@ namespace NuGet.Protocol.Core.v3
 
     public static class ServiceTypes
     {
+        public const string VersionV2 = "/2.0.0";
         public const string TypeVersion = "/3.0.0-beta";
 
         public const string SearchQueryService = "SearchQueryService" + TypeVersion;
@@ -28,6 +29,7 @@ namespace NuGet.Protocol.Core.v3
         public const string RegistrationsBaseUrl = "RegistrationsBaseUrl" + TypeVersion;
         public const string ReportAbuse = "ReportAbuseUriTemplate" + TypeVersion;
         public const string Stats = "Stats" + TypeVersion;
+        public const string LegacyGallery = "LegacyGallery" + VersionV2;
     }
 
     public static class Properties
