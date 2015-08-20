@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace NuGet.Protocol.Core.Types
 {
     public class ListCommandResource : INuGetResource
     {
-        public string ListEndpoint { get; }
+        private readonly string _listEndpoint;
         public ListCommandResource(string listEndpoint)
         {
             if (listEndpoint == null)
@@ -14,12 +12,12 @@ namespace NuGet.Protocol.Core.Types
                 throw new ArgumentNullException(nameof(listEndpoint));
             }
 
-            ListEndpoint = listEndpoint;
+            _listEndpoint = listEndpoint;
         }
 
-        public Task<string> GetListEndpointAsync(CancellationToken token)
+        public string GetListEndpoint()
         {
-            return Task.FromResult<string>(ListEndpoint);
+            return _listEndpoint;
         }
     }
 }
