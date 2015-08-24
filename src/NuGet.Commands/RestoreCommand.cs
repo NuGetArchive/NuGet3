@@ -400,7 +400,7 @@ namespace NuGet.Commands
         {
             // Get the project graph
             var projectFrameworks = project.TargetFrameworks.Select(f => f.FrameworkName).ToList();
-            if (projectFrameworks.Count > 1 || targetGraphs.Count() == 0)
+            if (projectFrameworks.Count > 1 || !targetGraphs.Any())
             {
                 return new MSBuildRestoreResult(project.Name, project.BaseDirectory);
             }
