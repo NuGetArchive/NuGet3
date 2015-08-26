@@ -197,16 +197,18 @@ namespace NuGet.Frameworks
 
             profileNumber = -1;
 
-            var input = new HashSet<NuGetFramework>(supportedFrameworks, NuGetFramework.Comparer);
+            // Remove duplicate frameworks, ex: win+win8 -> win
+            var profileFrameworks = RemoveDuplicateFramework(supportedFrameworks);
 
+            // Find a match in the known portable frameworks
             foreach (var pair in _portableFrameworks)
             {
                 // to match the required set must be less than or the same count as the input
                 // if we knew which frameworks were optional in the input we could rule out the lesser ones also
-                if (pair.Value.Count <= input.Count)
+                if (pair.Value.Count <= profileFrameworks.Count)
                 {
                     var reduced = new List<NuGetFramework>();
-                    foreach (var curFw in supportedFrameworks)
+                    foreach (var curFw in profileFrameworks)
                     {
                         var isOptional = false;
 
@@ -244,6 +246,27 @@ namespace NuGet.Frameworks
             return false;
         }
 
+        private HashSet<NuGetFramework> RemoveDuplicateFramework(IEnumerable<NuGetFramework> supportedFrameworks)
+        {
+            var result = new HashSet<NuGetFramework>(NuGetFramework.Comparer);
+            var existingFrameworks = new HashSet<NuGetFramework>(NuGetFramework.Comparer);
+
+            foreach (var framework in supportedFrameworks)
+            {
+                if (!existingFrameworks.Contains(framework))
+                {
+                    result.Add(framework);
+
+                    // Add in the existing framework (included here) and all equivalent frameworks
+                    var equivalentFrameworks = GetAllEquivalentFrameworks(framework);
+
+                    existingFrameworks.UnionWith(equivalentFrameworks);
+                }
+            }
+
+            return result;
+        }
+
         // find all combinations that are equivalent
         // ex: net4+win8 <-> net4+netcore45
         private IEnumerable<IEnumerable<NuGetFramework>> GetEquivalentPermutations(IEnumerable<NuGetFramework> frameworks)
@@ -253,16 +276,7 @@ namespace NuGet.Frameworks
                 var current = frameworks.First();
                 var remaining = frameworks.Skip(1).ToArray();
 
-                var equalFrameworks = new HashSet<NuGetFramework>(NuGetFramework.Comparer);
-                // include ourselves
-                equalFrameworks.Add(current);
-
-                // find all equivalent frameworks for the current one
-                HashSet<NuGetFramework> curFrameworks = null;
-                if (_equivalentFrameworks.TryGetValue(current, out curFrameworks))
-                {
-                    equalFrameworks.UnionWith(curFrameworks);
-                }
+                var equalFrameworks = GetAllEquivalentFrameworks(current);
 
                 foreach (var fw in equalFrameworks)
                 {
@@ -284,6 +298,39 @@ namespace NuGet.Frameworks
             }
 
             yield break;
+        }
+
+        /// <summary>
+        /// Get all equivalent frameworks including the given framework
+        /// </summary>
+        private HashSet<NuGetFramework> GetAllEquivalentFrameworks(NuGetFramework framework)
+        {
+            // Loop through the frameworks, all frameworks that are not in results yet 
+            // will be added to toProcess to get the equivalent frameworks
+            var toProcess = new Stack<NuGetFramework>();
+            var results = new HashSet<NuGetFramework>(NuGetFramework.Comparer);
+
+            toProcess.Push(framework);
+            results.Add(framework);
+
+            while (toProcess.Count > 0)
+            {
+                var current = toProcess.Pop();
+
+                HashSet<NuGetFramework> currentEquivalent = null;
+                if (_equivalentFrameworks.TryGetValue(current, out currentEquivalent))
+                {
+                    foreach (var equalFramework in currentEquivalent)
+                    {
+                        if (results.Add(equalFramework))
+                        {
+                            toProcess.Push(equalFramework);
+                        }
+                    }
+                }
+            }
+
+            return results;
         }
 
         private IEnumerable<NuGetFramework> GetOptionalFrameworks(int profile)
