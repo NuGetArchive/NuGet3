@@ -114,7 +114,7 @@ namespace NuGet.Commands
                 var checker = new CompatibilityChecker(localRepository, lockFile, _log);
                 foreach (var graph in graphs)
                 {
-                    _log.LogVerbose(Strings.FormatLog_CheckingCompatibility(graph.Name));
+                    _log.LogDebug(Strings.FormatLog_CheckingCompatibility(graph.Name));
                     var res = checker.Check(graph);
                     _success &= res.Success;
                     checkResults.Add(res);
@@ -154,7 +154,7 @@ namespace NuGet.Commands
                 return Enumerable.Empty<RestoreTargetGraph>();
             }
 
-            _log.LogInformation(Strings.FormatLog_RestoringPackages(_request.Project.FilePath));
+            _log.LogDebug(Strings.FormatLog_RestoringPackages(_request.Project.FilePath));
 
             // Load repositories
             var projectResolver = new PackageSpecResolver(_request.Project);
@@ -289,7 +289,7 @@ namespace NuGet.Commands
 
             foreach (var pair in runtimesByFramework)
             {
-                _log.LogInformation(Strings.FormatLog_RestoringPackages(pair.Key.DotNetFrameworkName));
+                _log.LogDebug(Strings.FormatLog_RestoringPackages(pair.Key.DotNetFrameworkName));
 
                 frameworkTasks.Add(WalkDependenciesAsync(projectRange,
                     pair.Key,
@@ -693,7 +693,7 @@ namespace NuGet.Commands
             }
 
             // Resolve conflicts
-            _log.LogVerbose(Strings.FormatLog_ResolvingConflicts(name));
+            _log.LogDebug(Strings.FormatLog_ResolvingConflicts(name));
 
             // Flatten and create the RestoreTargetGraph to hold the packages
             var result = RestoreTargetGraph.Create(writeToLockFile, runtimeGraph, graphs, context, _log, framework, runtimeIdentifier);
@@ -748,7 +748,7 @@ namespace NuGet.Commands
             var resultGraphs = new List<Task<RestoreTargetGraph>>();
             foreach (var runtimeName in runtimeIds)
             {
-                _log.LogInformation(Strings.FormatLog_RestoringPackages(FrameworkRuntimePair.GetName(graph.Framework, runtimeName)));
+                _log.LogDebug(Strings.FormatLog_RestoringPackages(FrameworkRuntimePair.GetName(graph.Framework, runtimeName)));
 
                 resultGraphs.Add(WalkDependenciesAsync(projectRange,
                     graph.Framework,
@@ -791,7 +791,7 @@ namespace NuGet.Commands
                     var nextGraph = LoadRuntimeGraph(package);
                     if (nextGraph != null)
                     {
-                        _log.LogVerbose(Strings.FormatLog_MergingRuntimes(match.Library));
+                        _log.LogDebug(Strings.FormatLog_MergingRuntimes(match.Library));
                         runtimeGraph = RuntimeGraph.Merge(runtimeGraph, nextGraph);
                     }
                 }
