@@ -154,7 +154,7 @@ namespace NuGet.Commands
                 return Enumerable.Empty<RestoreTargetGraph>();
             }
 
-            _log.LogDebug(Strings.FormatLog_RestoringPackages(_request.Project.FilePath));
+            _log.LogInformation(Strings.FormatLog_RestoringPackages(_request.Project.FilePath));
 
             // Load repositories
             var projectResolver = new PackageSpecResolver(_request.Project);
