@@ -246,6 +246,7 @@ namespace NuGet.Configuration
             }
 
             packageSource.ProtocolVersion = ReadProtocolVersion(setting);
+            packageSource.DownloadTimeout = ReadDownloadTimeout(setting);
 
             return packageSource;
         }
@@ -262,6 +263,20 @@ namespace NuGet.Configuration
             }
 
             return PackageSource.DefaultProtocolVersion;
+        }
+
+        private static TimeSpan ReadDownloadTimeout(SettingValue setting)
+        {
+            string downloadTimeoutString;
+            int downloadTimeout;
+            if (setting.AdditionalData.TryGetValue(ConfigurationContants.DownloadTimeoutAttribute, out downloadTimeoutString)
+                && int.TryParse(downloadTimeoutString, out downloadTimeout)
+                && downloadTimeout > 0)
+            {
+                return TimeSpan.FromSeconds(downloadTimeout);
+            }
+
+            return PackageSource.DefaultDownloadTimeout;
         }
 
         private static int AddOrUpdateIndexedSource(

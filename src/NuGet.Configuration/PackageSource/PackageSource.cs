@@ -12,6 +12,11 @@ namespace NuGet.Configuration
         /// </summary>
         public const int DefaultProtocolVersion = 2;
 
+        /// <summary>
+        /// The default timeout when downloading packages.
+        /// </summary>
+        public static readonly TimeSpan DefaultDownloadTimeout = TimeSpan.FromMinutes(5);
+
         private readonly int _hashCode;
         private bool? _isHttp;
 
@@ -43,6 +48,11 @@ namespace NuGet.Configuration
         /// Gets or sets the protocol version of the source. Defaults to 2.
         /// </summary>
         public int ProtocolVersion { get; set; } = DefaultProtocolVersion;
+
+        /// <summary>
+        /// Gets or sets the maximum timeout in seconds when downloading packages from the source.
+        /// </summary>
+        public TimeSpan DownloadTimeout { get; set; } = DefaultDownloadTimeout;
 
         public bool IsHttp
         {
