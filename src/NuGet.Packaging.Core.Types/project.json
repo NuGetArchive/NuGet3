@@ -1,11 +1,11 @@
 ﻿{
-  "version": "3.2.0",
+  "version": "3.2.1",
   "dependencies": {
     "NuGet.Common": {
       "type": "build",
-      "version": "3.2.0"
+      "version": "3.2.1"
     },
-    "NuGet.Frameworks": "3.2.0"
+    "NuGet.Frameworks": "3.2.1"
   },
   "compilationOptions": {
     "warningsAsErrors": true
