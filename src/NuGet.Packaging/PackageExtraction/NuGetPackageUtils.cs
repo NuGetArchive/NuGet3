@@ -11,8 +11,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using NuGet.Common;
-using NuGet.Logging;
-using NuGet.Packaging.Core;
 
 namespace NuGet.Packaging
 {
@@ -22,13 +20,24 @@ namespace NuGet.Packaging
 
         public static async Task InstallFromSourceAsync(
             Func<Stream, Task> copyToAsync,
-            PackageIdentity packageIdentity,
-            string packagesDirectory,
-            ILogger log,
-            bool fixNuspecIdCasing,
+            VersionFolderPathContext versionFolderPathContext,
             CancellationToken token)
         {
-            var packagePathResolver = new VersionFolderPathResolver(packagesDirectory);
+            if (copyToAsync == null)
+            {
+                throw new ArgumentNullException(nameof(copyToAsync));
+            }
+
+            if (versionFolderPathContext == null)
+            {
+                throw new ArgumentNullException(nameof(versionFolderPathContext));
+            }
+
+            var packagePathResolver = new VersionFolderPathResolver(
+                versionFolderPathContext.PackagesDirectory, versionFolderPathContext.NormalizeFileNames);
+
+            var packageIdentity = versionFolderPathContext.Package;
+            var logger = versionFolderPathContext.Logger;
 
             var targetPath = packagePathResolver.GetInstallPath(packageIdentity.Id, packageIdentity.Version);
             var targetNuspec = packagePathResolver.GetManifestFilePath(packageIdentity.Id, packageIdentity.Version);
@@ -45,7 +54,11 @@ namespace NuGet.Packaging
                     // waiting on this lock don't need to install it again.
                     if (!File.Exists(targetNupkg))
                     {
-                        log.LogInformation(string.Format(CultureInfo.CurrentCulture, Strings.Log_InstallingPackage, packageIdentity.Id, packageIdentity.Version));
+                        logger.LogInformation(string.Format(
+                            CultureInfo.CurrentCulture,
+                            Strings.Log_InstallingPackage,
+                            packageIdentity.Id,
+                            packageIdentity.Version));
 
                         cancellationToken.ThrowIfCancellationRequested();
 
@@ -65,19 +78,28 @@ namespace NuGet.Packaging
                             await copyToAsync(nupkgStream);
                             nupkgStream.Seek(0, SeekOrigin.Begin);
 
-                            ExtractPackage(targetPath, nupkgStream);
+                            if (versionFolderPathContext.ExtractNuspecOnly)
+                            {
+                                ExtractNuspec(targetNupkg, targetNuspec, nupkgStream);
+                            }
+                            else
+                            {
+                                ExtractPackage(targetPath, nupkgStream);
+                            }
                         }
 
-                        if (fixNuspecIdCasing)
+                        if (versionFolderPathContext.FixNuspecIdCasing)
                         {
-                            // DNU REFACTORING TODO: delete the hacky FixNuSpecIdCasing() and uncomment logic below after we
+                            // DNU REFACTORING TODO: delete the hacky FixNuSpecIdCasing()
+                            // and uncomment logic below after we
                             // have implementation of NuSpecFormatter.Read()
                             // Fixup the casing of the nuspec on disk to match what we expect
                             var nuspecFile = Directory.EnumerateFiles(targetPath, "*" + ManifestExtension).Single();
                             FixNuSpecIdCasing(nuspecFile, targetNuspec, packageIdentity.Id);
                         }
 
-                        using (var nupkgStream = File.Open(targetNupkg, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        using (var nupkgStream
+                            = File.Open(targetNupkg, FileMode.Open, FileAccess.Read, FileShare.Read))
                         {
                             string packageHash;
                             using (var sha512 = SHA512.Create())
@@ -85,17 +107,45 @@ namespace NuGet.Packaging
                                 packageHash = Convert.ToBase64String(sha512.ComputeHash(nupkgStream));
                             }
 
-                            // Note: PackageRepository relies on the hash file being written out as the final operation as part of a package install
+                            // Note: PackageRepository relies on the hash file being written out
+                            // as the final operation as part of a package install
                             // to assume a package was fully installed.
                             File.WriteAllText(hashPath, packageHash);
                         }
 
-                        log.LogVerbose($"Completed installation of {packageIdentity.Id} {packageIdentity.Version}");
+                        logger.LogVerbose($"Completed installation of {packageIdentity.Id} {packageIdentity.Version}");
                     }
 
                     return 0;
                 },
                 token: token);
+        }
+
+        private static void ExtractNuspec(string targetNupkg, string targetNuspec, FileStream stream)
+        {
+            using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
+            {
+                var nuspecEntry = archive.Entries
+                    .FirstOrDefault(p => p.FullName.EndsWith(ManifestExtension, StringComparison.OrdinalIgnoreCase));
+
+                if (nuspecEntry == null)
+                {
+                    throw new FileNotFoundException(string.Format(
+                        CultureInfo.CurrentCulture,
+                        Strings.MissingNuspec,
+                        targetNupkg));
+                }
+
+                // Nuspec found, extract and leave the rest
+                using (var entryStream = nuspecEntry.Open())
+                {
+                    using (var targetStream
+                        = new FileStream(targetNuspec, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        entryStream.CopyTo(targetStream);
+                    }
+                }
+            }
         }
 
         // DNU REFACTORING TODO: delete this temporary workaround after we have NuSpecFormatter.Read()
@@ -108,8 +158,10 @@ namespace NuGet.Packaging
             {
                 var xDoc = XDocument.Parse(File.ReadAllText(nuspecFile),
                     LoadOptions.PreserveWhitespace);
-                var metadataNode = xDoc.Root.Elements().Where(e => StringComparer.Ordinal.Equals(e.Name.LocalName, "metadata")).First();
-                var node = metadataNode.Elements(XName.Get("id", metadataNode.GetDefaultNamespace().NamespaceName)).First();
+                var metadataNode = xDoc.Root.Elements()
+                    .Where(e => StringComparer.Ordinal.Equals(e.Name.LocalName, "metadata")).First();
+                var node = metadataNode.Elements(XName.Get("id", metadataNode.GetDefaultNamespace().NamespaceName))
+                    .First();
                 node.Value = correctedId;
 
                 var tmpNuspecFile = nuspecFile + ".tmp";
@@ -208,7 +260,8 @@ namespace NuGet.Packaging
 
                     using (var entryStream = entry.Open())
                     {
-                        using (var targetStream = new FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.None))
+                        using (var targetStream
+                            = new FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.None))
                         {
                             entryStream.CopyTo(targetStream);
                         }

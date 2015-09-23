@@ -859,13 +859,18 @@ namespace NuGet.Commands
         private async Task InstallPackageAsync(RemoteMatch installItem, string packagesDirectory, CancellationToken token)
         {
             var packageIdentity = new PackageIdentity(installItem.Library.Name, installItem.Library.Version);
-            await NuGetPackageUtils.InstallFromSourceAsync(
-                stream => installItem.Provider.CopyToAsync(installItem.Library, stream, token),
+            var versionFolderPathContext = new VersionFolderPathContext(
                 packageIdentity,
                 packagesDirectory,
                 _log,
                 fixNuspecIdCasing: true,
-                token: token);
+                extractNuspecOnly: false,
+                normalizeFileNames: false);
+
+            await NuGetPackageUtils.InstallFromSourceAsync(
+                stream => installItem.Provider.CopyToAsync(installItem.Library, stream, token),
+                versionFolderPathContext,
+                token);
         }
 
         private IRemoteDependencyProvider CreateProviderFromSource(PackageSource source, SourceCacheContext cacheContext)
