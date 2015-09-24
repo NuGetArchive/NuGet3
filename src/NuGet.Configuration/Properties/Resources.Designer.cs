@@ -27,6 +27,38 @@ namespace NuGet.Configuration
         }
 
         /// <summary>
+        /// Path '{0}' is invalid.
+        /// </summary>
+        internal static string Error_InvalidPath
+        {
+            get { return GetString("Error_InvalidPath"); }
+        }
+
+        /// <summary>
+        /// Path '{0}' is invalid.
+        /// </summary>
+        internal static string FormatError_InvalidPath(object p0)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Error_InvalidPath"), p0);
+        }
+
+        /// <summary>
+        /// Path '{0}' is invalid or not an absolute path.
+        /// </summary>
+        internal static string Error_InvalidPathOrNotAbsolute
+        {
+            get { return GetString("Error_InvalidPathOrNotAbsolute"); }
+        }
+
+        /// <summary>
+        /// Path '{0}' is invalid or not an absolute path.
+        /// </summary>
+        internal static string FormatError_InvalidPathOrNotAbsolute(object p0)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Error_InvalidPathOrNotAbsolute"), p0);
+        }
+
+        /// <summary>
         /// There are no writable config files.
         /// </summary>
         internal static string Error_NoWritableConfig

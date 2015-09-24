@@ -8,11 +8,13 @@ namespace NuGet.Configuration
 {
     public static class SettingsUtility
     {
-        public const string ConfigSection = "config";
-        public const string GlobalPackagesFolderKey = "globalPackagesFolder";
-        public const string GlobalPackagesFolderEnvironmentKey = "NUGET_PACKAGES";
-        public const string DefaultGlobalPackagesFolderPath = ".nuget\\packages\\";
-        public const string RepositoryPathKey = "repositoryPath";
+        public static readonly string ConfigSection = "config";
+        public static readonly string GlobalPackagesFolderKey = "globalPackagesFolder";
+        public static readonly string GlobalPackagesFolderEnvironmentKey = "NUGET_PACKAGES";
+        public static readonly string DefaultGlobalPackagesFolderPath = ".nuget\\packages\\";
+        public static readonly string RepositoryPathKey = "repositoryPath";
+        public static readonly string OfflineFeedKey = "offlineFeed";
+        public static readonly string DefaultOfflineFeedFolderPath = ".nuget\\offlinefeed\\";
 
         public static string GetRepositoryPath(ISettings settings)
         {
@@ -155,6 +157,46 @@ namespace NuGet.Configuration
             path = Path.Combine(userProfile, DefaultGlobalPackagesFolderPath);
 
             return path;
+        }
+
+        public static string GetOfflineFeed(ISettings settings)
+        {
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            var path = settings.GetValue(ConfigSection, OfflineFeedKey, isPath: false);
+            if (!string.IsNullOrEmpty(path))
+            {
+                path = path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+                ThrowIfNotValid(path, isAbsolute: true);
+                return path;
+            }
+
+#if !DNXCORE50
+            var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+#else
+            var userProfile = Environment.GetEnvironmentVariable("UserProfile");
+#endif
+            path = Path.Combine(userProfile, DefaultOfflineFeedFolderPath);
+
+            ThrowIfNotValid(path, isAbsolute: true);
+            return path;
+        }
+
+        private static void ThrowIfNotValid(string path, bool isAbsolute)
+        {
+            Uri tempUri;
+            if (isAbsolute && !Uri.TryCreate(path, UriKind.Absolute, out tempUri))
+            {
+                throw new ArgumentException(string.Format(Resources.Error_InvalidPathOrNotAbsolute, path));
+            }
+
+            if (!Uri.TryCreate(path, UriKind.RelativeOrAbsolute, out tempUri))
+            {
+                throw new ArgumentException(string.Format(Resources.Error_InvalidPath, path));
+            }
         }
     }
 }

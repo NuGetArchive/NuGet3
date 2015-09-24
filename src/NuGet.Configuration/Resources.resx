@@ -120,6 +120,12 @@
   <data name="Argument_Cannot_Be_Null_Or_Empty" xml:space="preserve">
     <value>Value cannot be null or empty string.</value>
   </data>
+  <data name="Error_InvalidPath" xml:space="preserve">
+    <value>Path '{0}' is invalid.</value>
+  </data>
+  <data name="Error_InvalidPathOrNotAbsolute" xml:space="preserve">
+    <value>Path '{0}' is invalid or not an absolute path.</value>
+  </data>
   <data name="Error_NoWritableConfig" xml:space="preserve">
     <value>There are no writable config files.</value>
   </data>

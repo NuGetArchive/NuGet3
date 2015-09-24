@@ -1833,6 +1833,84 @@ namespace NuGet.Configuration.Test
             Assert.Equal(expectedPath, globalPackagesFolderPath);
         }
 
+        [Fact]
+        public void GetOfflineFeed_FromNuGetConfig()
+        {
+            // Arrange
+            var config = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+<config>
+<add key=""offlineFeed"" value=""C:\Temp\NuGet"" />
+</config>
+</configuration>";
+
+            var nugetConfigPath = "NuGet.config";
+            using (var mockBaseDirectory = TestFilesystemUtility.CreateRandomTestFolder())
+            {
+                TestFilesystemUtility.CreateConfigurationFile(nugetConfigPath, mockBaseDirectory, config);
+                Settings settings = new Settings(mockBaseDirectory);
+
+                // Act
+                var offlineFeed = SettingsUtility.GetOfflineFeed(settings);
+
+                // Assert
+                Assert.Equal(@"C:\Temp\NuGet", offlineFeed);
+            }
+        }
+
+        [Fact]
+        public void GetOfflineFeed_FromNuGetConfig_RelativePath()
+        {
+            // Arrange
+            var config = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+<config>
+<add key=""offlineFeed"" value=""Temp\NuGet"" />
+</config>
+</configuration>";
+
+            var nugetConfigPath = "NuGet.config";
+            using (var mockBaseDirectory = TestFilesystemUtility.CreateRandomTestFolder())
+            {
+                TestFilesystemUtility.CreateConfigurationFile(nugetConfigPath, mockBaseDirectory, config);
+                Settings settings = new Settings(mockBaseDirectory);
+
+                // Act
+                Exception exception = null;
+                try
+                {
+                    var offlineFeed = SettingsUtility.GetOfflineFeed(settings);
+                }
+                catch (ArgumentException ex)
+                {
+                    exception = ex;
+                }
+
+                // Assert
+                Assert.NotNull(exception);
+                Assert.True(exception is ArgumentException);
+                Assert.Equal(exception.Message, "Path 'Temp\\NuGet' is invalid or not an absolute path.");
+            }
+        }
+
+        [Fact]
+        public void GetOfflineFeed_Default()
+        {
+            // Arrange
+#if !DNXCORE50
+            var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+#else
+            var userProfile = Environment.GetEnvironmentVariable("UserProfile");
+#endif
+            var expectedPath = Path.Combine(userProfile, SettingsUtility.DefaultOfflineFeedFolderPath);
+
+            // Act
+            var offlineFeed = SettingsUtility.GetOfflineFeed(new NullSettings());
+
+            // Assert
+            Assert.Equal(expectedPath, offlineFeed);
+        }
+
         private void AssertEqualCollections(IList<SettingValue> actual, string[] expected)
         {
             Assert.Equal(actual.Count, expected.Length / 2);
