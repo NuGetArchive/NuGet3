@@ -211,8 +211,16 @@ namespace NuGet.Client
             public SelectionCriteria ForRuntime(string runtimeIdentifier)
             {
                 var builder = new SelectionCriteriaBuilder(_conventions.Properties);
+                if (!string.IsNullOrEmpty(runtimeIdentifier))
+                {
+                    //  First try runtime-specific matches
+                    builder = builder
+                        .Add[PropertyNames.RuntimeIdentifier, runtimeIdentifier];
+                }
+
+                //  Then try runtime-agnostic
                 builder = builder
-                    .Add[PropertyNames.RuntimeIdentifier, runtimeIdentifier];
+                    .Add[PropertyNames.RuntimeIdentifier, null];
                 return builder.Criteria;
             }
         }
