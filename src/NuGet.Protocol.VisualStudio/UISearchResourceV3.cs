@@ -86,7 +86,15 @@ namespace NuGet.Protocol.VisualStudio
                 metadata = await _metadataResource.GetMetadata(topPackage, token);
             }
 
-            var searchResult = new UISearchMetadata(topPackage, title, summary, iconUrl, versionList, metadata);
+            var searchResult = new UISearchMetadata(
+                topPackage, 
+                title, 
+                summary,
+                string.Join(", ", metadata.Authors),
+                metadata.DownloadCount,                
+                iconUrl, 
+                versionList, 
+                metadata);
             return searchResult;
         }
 
