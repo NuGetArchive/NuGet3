@@ -147,11 +147,15 @@ namespace NuGet.Configuration
                 return path;
             }
 
-#if !DNXCORE50
-            var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-#else
+            // By default use %userprofile%\.nuget\packages
             var userProfile = Environment.GetEnvironmentVariable("UserProfile");
-#endif
+
+            if (string.IsNullOrEmpty(userProfile))
+            {
+                // Throw an error message telling the user to set NUGET_PACKAGES
+                throw new ArgumentException(Resources.UserProfileMissingUseNuGetPackages);
+            }
+
             path = Path.Combine(userProfile, DefaultGlobalPackagesFolderPath);
 
             return path;

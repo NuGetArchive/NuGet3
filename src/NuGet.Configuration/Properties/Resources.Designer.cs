@@ -123,6 +123,22 @@ namespace NuGet.Configuration
         }
 
         /// <summary>
+        /// The environment variable 'UserProfile' is empty or invalid. Set 'NUGET_PACKAGES' to a valid directory to override the global packages folder location.
+        /// </summary>
+        internal static string UserProfileMissingUseNuGetPackages
+        {
+            get { return GetString("UserProfileMissingUseNuGetPackages"); }
+        }
+
+        /// <summary>
+        /// The environment variable 'UserProfile' is empty or invalid. Set 'NUGET_PACKAGES' to a valid directory to override the global packages folder location.
+        /// </summary>
+        internal static string FormatUserProfileMissingUseNuGetPackages()
+        {
+            return GetString("UserProfileMissingUseNuGetPackages");
+        }
+
+        /// <summary>
         /// Unable to parse config file '{0}'.
         /// </summary>
         internal static string UserSettings_UnableToParseConfigFile
