@@ -124,8 +124,8 @@ namespace NuGet.Frameworks
                     var monotouch = new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.MonoTouch, new Version(0, 0));
                     var xamarinIOs = new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.XamarinIOs, new Version(0, 0));
                     var xamarinWatchOS = new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.XamarinWatchOS, new Version(0, 0));
-                    var xamarintvOS = new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.XamarintvOS, new Version(0, 0));
-                    var monoFrameworks = new NuGetFramework[] { monoandroid, monotouch, xamarinIOs, xamarinWatchOS, xamarintvOS };
+                    var xamarinTVOS = new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.XamarinTVOS, new Version(0, 0));
+                    var monoFrameworks = new NuGetFramework[] { monoandroid, monotouch, xamarinIOs, xamarinWatchOS, xamarinTVOS };
 
                     profileOptionalFrameworks = new List<KeyValuePair<int, NuGetFramework[]>>();
 
