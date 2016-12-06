@@ -267,6 +267,8 @@ namespace NuGet.Test
         [InlineData("xamarinpsthree")]
         [InlineData("xamarinpsfour")]
         [InlineData("xamarinpsvita")]
+        [InlineData("xamarintvos")]
+        [InlineData("xamarinwatchos")]
         [InlineData("xamarinxboxthreesixty")]
         [InlineData("xamarinxboxone")]
         [InlineData("sl6")]
